@@ -1,0 +1,34 @@
+{
+  "name": "hapiest-mysql",
+  "version": "0.0.1",
+  "description": "A wrapper around mysql that provides a very descriptive way of running queries.",
+  "main": "index.js",
+  "scripts": {
+    "test": "NODE_ENV=test mocha ./test/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jonathan-fulton/hapiest-mysql.git"
+  },
+  "keywords": [
+    "hapi.js",
+    "hapiest",
+    "mysql"
+  ],
+  "author": "Jonathan Fulton",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jonathan-fulton/hapiest-mysql/issues"
+  },
+  "homepage": "https://github.com/jonathan-fulton/hapiest-mysql#readme",
+  "dependencies": {
+    "bluebird": "^3.3.5",
+    "config": "^1.20.1",
+    "hapiest-vo": "0.0.2",
+    "joi": "^8.1.0",
+    "mysql": "^2.10.2"
+  },
+  "devDependencies": {
+    "should": "^8.3.1"
+  }
+}
