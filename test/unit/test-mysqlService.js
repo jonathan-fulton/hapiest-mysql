@@ -4,11 +4,16 @@
 
 const Should = require('should');
 const Promise = require('bluebird');
+const interceptStdout = require('intercept-stdout');
 
 const MysqlServiceFactory = require('../../lib/mysqlServiceFactory');
 const MysqlService = require('../../lib/mysqlService');
 
 const MysqlModificationResult = require('../../lib/mysqlModificationResult');
+const LoggerFactory = require('hapiest-logger/lib/loggerFactory');
+const LoggerConfigFactory = require('hapiest-logger/lib/loggerConfigFactory');
+const loggerConfig = LoggerConfigFactory.createFromJsObj({enabled: true, consoleTransport: {enabled:true, level: 'info'}});
+const logger = LoggerFactory.createLogger(loggerConfig);
 
 /**********************************************************
  * COMMON SETUP
@@ -22,7 +27,7 @@ const writeConnectionConfig = {
     password: 'hapiestmysql',
     connectionLimit: 1
 };
-const mysqlService = MysqlServiceFactory.createFromObjWithOnePool(writeConnectionConfig);
+const mysqlService = MysqlServiceFactory.createFromObjWithOnePool(writeConnectionConfig, logger);
 
 function databaseSetup(done) {
 
@@ -298,6 +303,44 @@ describe('MysqlService', function() {
             cleanedInput.should.eql("'string 1', 'string 2', 'string 3 \\'and then some\\' '");
         })
     });
+
+    describe('_logError', function() {
+        it('Should call .error function on the logger', function() {
+            let loggedTxt = '';
+            let unhookIntercept = null;
+            let error = null;
+            return Promise.resolve()
+                .then(() => {
+                    unhookIntercept = interceptStdout((txt) => {loggedTxt += txt;}); // Need this to intercept the logger's output to stdout
+                })
+                .then(() => mysqlService.selectOne('SELECT ERROR SYNTAX...'))
+                .catch((err) => {
+                    error = err;
+                })
+                .then(() => {
+                    Should.exist(error);
+                    const loggedObj = JSON.parse(loggedTxt);
+                    
+                    loggedObj.should.have.property('message');
+                    loggedObj.should.have.property('level');
+                    loggedObj.should.have.property('data');
+                    
+                    loggedObj.message.should.eql('Error executing SQL');
+                    loggedObj.level.should.eql('error');
+                    
+                    loggedObj.data.should.have.property('err');
+                    loggedObj.data.should.have.property('errorStack');
+                    loggedObj.data.should.have.property('errorMessage');
+                    loggedObj.data.should.have.property('sql');
+
+                    loggedObj.data.errorStack.should.be.a.String();
+                    loggedObj.data.errorMessage.should.be.a.String();
+                    loggedObj.data.sql.should.eql('SELECT ERROR SYNTAX...');
+                })
+        });
+    });
+
+    // @TODO: add testing to ensure logging works on SQL error
 
 
 });

@@ -1,6 +1,6 @@
 {
   "name": "hapiest-mysql",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "A wrapper around mysql that provides a very descriptive way of running queries.",
   "main": "index.js",
   "scripts": {
@@ -31,6 +31,8 @@
   "devDependencies": {
     "async": "^2.0.0-rc.4",
     "config-uncached": "^1.0.2",
+    "hapiest-logger": "0.0.3",
+    "intercept-stdout": "^0.1.2",
     "path": "^0.12.7",
     "should": "^8.3.1"
   }
