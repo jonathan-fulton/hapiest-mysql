@@ -1,7 +1,7 @@
 'use strict';
 
 const Should = require('should');
-const MysqlQuery = require('../lib/mysqlQuery');
+const MysqlQuery = require('../../lib/mysqlQuery');
 
 describe('MysqlQuery', function(){
 

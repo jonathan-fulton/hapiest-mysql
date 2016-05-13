@@ -5,10 +5,10 @@
 const Should = require('should');
 const Promise = require('bluebird');
 
-const MysqlServiceFactory = require('../lib/mysqlServiceFactory');
-const MysqlService = require('../lib/mysqlService');
+const MysqlServiceFactory = require('../../lib/mysqlServiceFactory');
+const MysqlService = require('../../lib/mysqlService');
 
-const MysqlModificationResult = require('../lib/mysqlModificationResult');
+const MysqlModificationResult = require('../../lib/mysqlModificationResult');
 
 /**********************************************************
  * COMMON SETUP

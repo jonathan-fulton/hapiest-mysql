@@ -1,8 +1,8 @@
 'use strict';
 
 const Should = require('should');
-const MysqlService = require('../index');
-const MysqlServicePoolConnectionConfigFactory = require('../lib/mysqlPoolConnectionConfigFactory');
+const MysqlService = require('../../index');
+const MysqlServicePoolConnectionConfigFactory = require('../../lib/mysqlPoolConnectionConfigFactory');
 
 describe('index.js', function() {
    it('Should be a function b/c its a class constructor', function() {

@@ -1,0 +1,12 @@
+{
+  "database": {
+    "write": {
+      "host": "somehost",
+      "port": 30000,
+      "database": "db",
+      "user": "user",
+      "password": "badpassword",
+      "connectionLimit": 100
+    }
+  }
+}
