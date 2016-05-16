@@ -37,6 +37,8 @@ describe('MysqlPoolConnectionsConfigFactory', function() {
             writeConfig.user.should.eql('user');
             writeConfig.password.should.eql('badpassword');
             writeConfig.connectionLimit.should.eql(100);
+            Should.exist(writeConfig.multipleStatements);
+            writeConfig.multipleStatements.should.be.true;
         });
 
     });

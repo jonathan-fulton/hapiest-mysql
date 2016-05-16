@@ -6,7 +6,8 @@
       "database": "db",
       "user": "user",
       "password": "badpassword",
-      "connectionLimit": 100
+      "connectionLimit": 100,
+      "multipleStatements": true
     }
   }
 }
