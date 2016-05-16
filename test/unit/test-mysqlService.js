@@ -34,7 +34,7 @@ function databaseSetup(done) {
     const queries = [
         'DROP TABLE IF EXISTS __testing',
         `
-                CREATE TABLE __testing (
+                CREATE TABLE IF NOT EXISTS __testing (
                     id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
                     colInt INT NOT NULL,
                     colVarchar VARCHAR(20) NOT NULL,
@@ -50,11 +50,14 @@ function databaseSetup(done) {
             `
     ];
 
-    let currentContext = Promise.resolve();
-    queries.forEach(query => {
-        currentContext = currentContext.then(() => mysqlService.executeGenericQuery(query));
-    });
-    currentContext.catch(err => done(err)).then(() => done());
+    mysqlService.executeQueries(queries)
+        .then(() => done(), (err) => done(err));
+}
+
+function databaseTeardown(done) {
+    const queries = ['DROP TABLE IF EXISTS __testing'];
+    mysqlService.executeQueries(queries)
+        .then(() => done(), (err) => done(err));
 }
 
 /**********************************************************
@@ -65,6 +68,7 @@ describe('MysqlService', function() {
 
     describe('select functions', function(){
         before(databaseSetup);
+        after(databaseTeardown);
 
         describe('selectOne', function() {
 
@@ -191,6 +195,7 @@ describe('MysqlService', function() {
     describe('data modification functions', function() {
         describe('insert', function() {
             beforeEach(databaseSetup);
+            after(databaseTeardown);
 
             it('Should insert a value into the database and return data about the insertion', function() {
                 return mysqlService.insert('INSERT INTO __testing(colInt, colVarchar) VALUES(10, \'ten\')')
@@ -234,6 +239,7 @@ describe('MysqlService', function() {
 
         describe('update', function() {
             beforeEach(databaseSetup);
+            after(databaseTeardown);
 
             it('Should update a value in the database and return data about the update', function() {
                 return mysqlService.update('UPDATE __testing SET colVarchar = \'twenty\' WHERE colInt = 2')
@@ -263,6 +269,7 @@ describe('MysqlService', function() {
 
         describe('delete', function() {
             beforeEach(databaseSetup);
+            after(databaseTeardown);
 
             it('Should delete a row in the database and return data about the delete', function() {
                 return mysqlService.delete('DELETE FROM __testing WHERE colInt = 2')
@@ -288,6 +295,8 @@ describe('MysqlService', function() {
             });
         });
     });
+
+    // @TODO: add tests for the generic query functions
 
     describe('clean', function() {
         it('Should escape little Bobby DROP TABLEs', function() {
@@ -339,8 +348,6 @@ describe('MysqlService', function() {
                 })
         });
     });
-
-    // @TODO: add testing to ensure logging works on SQL error
 
 
 });
