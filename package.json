@@ -1,6 +1,6 @@
 {
   "name": "hapiest-mysql",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "A wrapper around mysql that provides a very descriptive way of running queries.",
   "main": "index.js",
   "scripts": {
@@ -26,7 +26,8 @@
     "config": "^1.20.1",
     "hapiest-vo": "^0.0.3",
     "joi": "^8.1.0",
-    "mysql": "^2.10.2"
+    "mysql": "^2.10.2",
+    "squel": "^5.2.1"
   },
   "devDependencies": {
     "async": "^2.0.0-rc.4",
