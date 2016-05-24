@@ -22,6 +22,17 @@ class User extends VO {
     get dateCreated() { return this.get('dateCreated'); }
 }
 
+class UserCreateArgs extends VO {
+    constructor(args) {
+        super();
+        this._addProperties(args);
+    }
+
+    get firstName() { return this.get('firstName'); }
+    get lastName() { return this.get('lastName'); }
+    get email() { return this.get('email'); }
+}
+
 const createUserFromDbRow = (dbRow) => {
     const userArgs = {};
     Object.keys(dbRow).forEach(columnName => {
@@ -90,6 +101,25 @@ describe('MysqlDao', function() {
 
         it('Should create a single row in the users table', function() {
             return mysqlDao.create({firstName: 'John', lastName: 'Doe', email: 'john.doe@gmail.com'})
+                .then(id => {
+                    Should.exist(id);
+                    id.should.be.a.Number();
+
+                    const checkRowPromise = mysqlService.selectOne(`SELECT * FROM users WHERE email = 'john.doe@gmail.com'`)
+                        .then(dbRow => {
+                            Should.exist(dbRow);
+                            dbRow.id.should.be.a.Number();
+                            dbRow.first_name.should.eql('John');
+                            dbRow.last_name.should.eql('Doe');
+                            dbRow.email.should.eql('john.doe@gmail.com');
+                            Should.exist(dbRow.date_created);
+                        });
+                    return Promise.all([checkRowPromise]);
+                });
+        });
+
+        it('Should create a single row in the users table from a VO', function() {
+            return mysqlDao.create(new UserCreateArgs({firstName: 'John', lastName: 'Doe', email: 'john.doe@gmail.com'}))
                 .then(id => {
                     Should.exist(id);
                     id.should.be.a.Number();

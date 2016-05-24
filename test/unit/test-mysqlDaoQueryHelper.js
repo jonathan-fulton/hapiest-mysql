@@ -2,11 +2,23 @@
 
 const Should = require('should');
 const Mysql = require('mysql');
+const VO = require('hapiest-vo');
 
 const MysqlDaoQueryHelper = require('../../lib/mysqlDaoQueryHelper');
 
 const cleanFunction = Mysql.escape;
 const mysqlDaoQueryHelper = new MysqlDaoQueryHelper('users', cleanFunction);
+
+class UserCreateArgs extends VO {
+    constructor(args) {
+        super();
+        this._addProperties(args);
+    }
+
+    get firstName() { return this.get('firstName'); }
+    get lastName() { return this.get('lastName'); }
+    get password() { return this.get('password'); }
+}
 
 describe('MysqlDaoQueryHelper', function() {
 
@@ -14,6 +26,13 @@ describe('MysqlDaoQueryHelper', function() {
 
         it('Should generate an INSERT statement for a single entry in users table', function() {
             const sql = mysqlDaoQueryHelper.create({firstName: 'firstName', lastName: 'lastName', password: 'boom!'});
+            Should.exist(sql);
+
+            sql.should.eql(`INSERT INTO users (first_name, last_name, password) VALUES ('firstName', 'lastName', 'boom!')`);
+        });
+
+        it('Should generate an INSERT statement for a single entry in users table from a VO', function() {
+            const sql = mysqlDaoQueryHelper.create(new UserCreateArgs({firstName: 'firstName', lastName: 'lastName', password: 'boom!'}));
             Should.exist(sql);
 
             sql.should.eql(`INSERT INTO users (first_name, last_name, password) VALUES ('firstName', 'lastName', 'boom!')`);
