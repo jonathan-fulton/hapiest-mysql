@@ -38,15 +38,18 @@ function databaseSetup(done) {
                     id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
                     colInt INT NOT NULL,
                     colVarchar VARCHAR(20) NOT NULL,
-                    UNIQUE CONSTRAIN (colVarchar)
+                    date_created_timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    date_created_datetime DATETIME NULL,
+                    date_created_date DATE NULL,
+                    UNIQUE INDEX (colVarchar)
                 );
             `,
         `
-                INSERT INTO __testing (colInt, colVarchar)
+                INSERT INTO __testing (colInt, colVarchar, date_created_datetime, date_created_date)
                 VALUES 
-                    (1,'one'),
-                    (2, 'two'),
-                    (3, 'three')
+                    (1,'one', NOW(), NOW()),
+                    (2, 'two', NOW(), NOW()),
+                    (3, 'three', NOW(), NOW())
             `
     ];
 
@@ -73,7 +76,7 @@ describe('MysqlService', function() {
         describe('selectOne', function() {
 
             it('It should select a single row with an object result', function() {
-                return mysqlService.selectOne('SELECT id, colInt, colVarchar FROM __testing ORDER BY id ASC')
+                return mysqlService.selectOne('SELECT id, colInt, colVarchar, date_created_timestamp, date_created_datetime, date_created_date FROM __testing ORDER BY id ASC')
                     .then((result) => {
                         Should.exist(result);
                         result.should.be.an.object;
@@ -83,6 +86,11 @@ describe('MysqlService', function() {
                         result.colInt.should.eql(1);
                         result.should.have.property('colVarchar');
                         result.colVarchar.should.eql('one');
+
+                        // Confirm that we convert dates back to dates (and don't leave them hanging as strings);
+                        result.date_created_timestamp.should.be.an.instanceOf(Date);
+                        result.date_created_datetime.should.be.an.instanceOf(Date);
+                        result.date_created_date.should.be.an.instanceOf(Date);
                     });
 
             });
