@@ -60,11 +60,14 @@ const mysqlService = MysqlServiceFactory.createFromObjWithOnePool(writeConnectio
 
 const mysqlDaoArgs = MysqlDaoArgsFactory.createFromJsObj({
     mysqlService: mysqlService,
-    tableName: 'users',
     createVoFromDbRowFunction: createUserFromDbRow,
     logger: logger
 });
-const mysqlDao = new MysqlDao(mysqlDaoArgs);
+
+class UserDao extends MysqlDao {
+    get tableName() {return 'users';}
+}
+const userDao = new UserDao(mysqlDaoArgs);
 
 function databaseSetup(done) {
 
@@ -100,7 +103,7 @@ describe('MysqlDao', function() {
         beforeEach(databaseSetup);
 
         it('Should create a single row in the users table', function() {
-            return mysqlDao.create({firstName: 'John', lastName: 'Doe', email: 'john.doe@gmail.com'})
+            return userDao.create({firstName: 'John', lastName: 'Doe', email: 'john.doe@gmail.com'})
                 .then(id => {
                     Should.exist(id);
                     id.should.be.a.Number();
@@ -119,7 +122,7 @@ describe('MysqlDao', function() {
         });
 
         it('Should create a single row in the users table from a VO', function() {
-            return mysqlDao.create(new UserCreateArgs({firstName: 'John', lastName: 'Doe', email: 'john.doe@gmail.com'}))
+            return userDao.create(new UserCreateArgs({firstName: 'John', lastName: 'Doe', email: 'john.doe@gmail.com'}))
                 .then(id => {
                     Should.exist(id);
                     id.should.be.a.Number();
@@ -143,7 +146,7 @@ describe('MysqlDao', function() {
         beforeEach(databaseSetup);
 
         it('Should create two row in the users table', function() {
-            return mysqlDao.createBulk([
+            return userDao.createBulk([
                 {firstName: 'John', lastName: 'Doe', email: 'john.doe@gmail.com'},
                 {firstName: 'Jane', lastName: 'Doe', email: 'jane.doe@gmail.com'}
             ])
@@ -181,14 +184,14 @@ describe('MysqlDao', function() {
 
         it('Should fetch a single row by id', function() {
             let newId = null;
-            return mysqlDao.create({firstName: 'John', lastName: 'Doe', email: 'john.doe@gmail.com'})
+            return userDao.create({firstName: 'John', lastName: 'Doe', email: 'john.doe@gmail.com'})
                 .then(id => { newId = id})
                 .then(() => {
-                    const createPromise = mysqlDao.create({firstName: 'Jane', lastName: 'Doe', email: 'jane.doe@gmail.com'}); // Add this to make sure the ID lookup actually does something
+                    const createPromise = userDao.create({firstName: 'Jane', lastName: 'Doe', email: 'jane.doe@gmail.com'}); // Add this to make sure the ID lookup actually does something
                     return Promise.all([createPromise]);
                 })
                 .then(() => {
-                    const checkRowPromise = mysqlDao.getOneById(newId)
+                    const checkRowPromise = userDao.getOneById(newId)
                         .then(user => {
                             Should.exist(user);
                             user.should.be.an.instanceOf(User);
@@ -209,14 +212,14 @@ describe('MysqlDao', function() {
 
         it('Should fetch a single row by email and first name', function() {
             let newId = null;
-            return mysqlDao.create({firstName: 'John', lastName: 'Doe', email: 'john.doe@gmail.com'})
+            return userDao.create({firstName: 'John', lastName: 'Doe', email: 'john.doe@gmail.com'})
                 .then(id => { newId = id})
                 .then(() => {
-                    const createPromise = mysqlDao.create({firstName: 'Jane', lastName: 'Doe', email: 'jane.doe@gmail.com'}); // Add this to make sure the ID lookup actually does something
+                    const createPromise = userDao.create({firstName: 'Jane', lastName: 'Doe', email: 'jane.doe@gmail.com'}); // Add this to make sure the ID lookup actually does something
                     return Promise.all([createPromise]);
                 })
                 .then(() => {
-                    const checkRowPromise = mysqlDao.getOne({firstName: 'Jane', email: 'jane.doe@gmail.com'})
+                    const checkRowPromise = userDao.getOne({firstName: 'Jane', email: 'jane.doe@gmail.com'})
                         .then(user => {
                             Should.exist(user);
                             user.should.be.an.instanceOf(User);
@@ -235,13 +238,13 @@ describe('MysqlDao', function() {
         beforeEach(databaseSetup);
 
         it('Should return two users', function() {
-            return mysqlDao.createBulk([
+            return userDao.createBulk([
                     {firstName: 'John', lastName: 'Doe', email: 'john.doe@gmail.com'},
                     {firstName: 'Jane', lastName: 'Doe', email: 'jane.doe@gmail.com'}
                 ])
                 .then((numRows) => {
 
-                    const checkRowPromise1 = mysqlDao.getAll({lastName: 'Doe'})
+                    const checkRowPromise1 = userDao.getAll({lastName: 'Doe'})
                         .then(users => {
                             Should.exist(users);
                             users.should.be.an.Array();
@@ -257,23 +260,23 @@ describe('MysqlDao', function() {
         beforeEach(databaseSetup);
 
         it('Should update Jane email address', function() {
-            return mysqlDao.createBulk([
+            return userDao.createBulk([
                     {firstName: 'John', lastName: 'Doe', email: 'john.doe@gmail.com'},
                     {firstName: 'Jane', lastName: 'Doe', email: 'jane.doe@gmail.com'}
                 ])
                 .then((numRows) => {
-                    const getIdPromise = mysqlDao.getOne({email: 'jane.doe@gmail.com'}).then(user => user.id);
+                    const getIdPromise = userDao.getOne({email: 'jane.doe@gmail.com'}).then(user => user.id);
                     return Promise.all([getIdPromise]).then(results => results[0]);
                 })
                 .then(idToUpdate => {
-                    const updatePromise = mysqlDao.updateById(idToUpdate, {firstName: 'joe', lastName: 'bob'});
+                    const updatePromise = userDao.updateById(idToUpdate, {firstName: 'joe', lastName: 'bob'});
                     return Promise.all([updatePromise]).then(results => results[0]);
                 })
                 .then(numRowsChanged => {
                     Should.exist(numRowsChanged);
                     numRowsChanged.should.eql(1);
 
-                    const assertPromise = mysqlDao.getOne({email: 'jane.doe@gmail.com'})
+                    const assertPromise = userDao.getOne({email: 'jane.doe@gmail.com'})
                         .then(user => {
                             Should.exist(user);
 
@@ -290,19 +293,19 @@ describe('MysqlDao', function() {
         beforeEach(databaseSetup);
 
         it('Should update John Doe user', function() {
-            return mysqlDao.createBulk([
+            return userDao.createBulk([
                     {firstName: 'John', lastName: 'Doe', email: 'john.doe@gmail.com'},
                     {firstName: 'Jane', lastName: 'Doe', email: 'jane.doe@gmail.com'}
                 ])
                 .then(() => {
-                    const updatePromise = mysqlDao.updateOne({firstName: 'John'}, {firstName: 'joe', lastName: 'bob'});
+                    const updatePromise = userDao.updateOne({firstName: 'John'}, {firstName: 'joe', lastName: 'bob'});
                     return Promise.all([updatePromise]).then(results => results[0]);
                 })
                 .then(numRowsChanged => {
                     Should.exist(numRowsChanged);
                     numRowsChanged.should.eql(1);
 
-                    const assertPromise = mysqlDao.getOne({email: 'john.doe@gmail.com'})
+                    const assertPromise = userDao.getOne({email: 'john.doe@gmail.com'})
                         .then(user => {
                             Should.exist(user);
 
@@ -319,23 +322,23 @@ describe('MysqlDao', function() {
         beforeEach(databaseSetup);
 
         it('Should delete Jane Doe user', function() {
-            return mysqlDao.createBulk([
+            return userDao.createBulk([
                     {firstName: 'John', lastName: 'Doe', email: 'john.doe@gmail.com'},
                     {firstName: 'Jane', lastName: 'Doe', email: 'jane.doe@gmail.com'}
                 ])
                 .then((numRows) => {
-                    const getIdPromise = mysqlDao.getOne({email: 'jane.doe@gmail.com'}).then(user => user.id);
+                    const getIdPromise = userDao.getOne({email: 'jane.doe@gmail.com'}).then(user => user.id);
                     return Promise.all([getIdPromise]).then(results => results[0]);
                 })
                 .then(idToDelete => {
-                    const deletePromise = mysqlDao.deleteById(idToDelete);
+                    const deletePromise = userDao.deleteById(idToDelete);
                     return Promise.all([deletePromise]).then(results => results[0]);
                 })
                 .then(numRowsChanged => {
                     Should.exist(numRowsChanged);
                     numRowsChanged.should.eql(1);
 
-                    const assertPromise = mysqlDao.getOne({email: 'jane.doe@gmail.com'})
+                    const assertPromise = userDao.getOne({email: 'jane.doe@gmail.com'})
                         .then(user => {
                             Should.not.exist(user);
                         });
@@ -348,19 +351,19 @@ describe('MysqlDao', function() {
         beforeEach(databaseSetup);
 
         it('Should delete John Doe user', function() {
-            return mysqlDao.createBulk([
+            return userDao.createBulk([
                     {firstName: 'John', lastName: 'Doe', email: 'john.doe@gmail.com'},
                     {firstName: 'Jane', lastName: 'Doe', email: 'jane.doe@gmail.com'}
                 ])
                 .then(idToDelete => {
-                    const deletePromise = mysqlDao.deleteOne({firstName: 'John'});
+                    const deletePromise = userDao.deleteOne({firstName: 'John'});
                     return Promise.all([deletePromise]).then(results => results[0]);
                 })
                 .then(numRowsChanged => {
                     Should.exist(numRowsChanged);
                     numRowsChanged.should.eql(1);
 
-                    const assertPromise = mysqlDao.getOne({email: 'john.doe@gmail.com'})
+                    const assertPromise = userDao.getOne({email: 'john.doe@gmail.com'})
                         .then(user => {
                             Should.not.exist(user);
                         });
