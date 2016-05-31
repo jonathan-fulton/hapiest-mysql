@@ -64,6 +64,13 @@ describe('MysqlDaoQueryHelper', function() {
             sql.should.eql("SELECT * FROM users WHERE (first_name = 'John') AND (last_name = 'Doe') LIMIT 1");
         });
 
+        it('Should allow ? characters in the WHERE clause', function() {
+            const sql = mysqlDaoQueryHelper.getOne({url: 'http://www.youtube.com/?q=somevideo'});
+            Should.exist(sql);
+
+            sql.should.eql("SELECT * FROM users WHERE (url = 'http://www.youtube.com/?q=somevideo') LIMIT 1");
+        })
+
     });
 
     describe('getAll', function() {
@@ -73,6 +80,13 @@ describe('MysqlDaoQueryHelper', function() {
             Should.exist(sql);
 
             sql.should.eql("SELECT * FROM users WHERE (last_name = 'Doe')");
+        });
+
+        it('Should allow ? characters in the WHERE clause', function() {
+            const sql = mysqlDaoQueryHelper.getAll({url: 'http://www.youtube.com/?q=somevideo'});
+            Should.exist(sql);
+
+            sql.should.eql("SELECT * FROM users WHERE (url = 'http://www.youtube.com/?q=somevideo')");
         });
 
     });
