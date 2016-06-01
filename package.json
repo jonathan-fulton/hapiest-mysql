@@ -1,6 +1,6 @@
 {
   "name": "hapiest-mysql",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "description": "A wrapper around mysql that provides a very descriptive way of running queries.",
   "main": "index.js",
   "scripts": {
@@ -24,7 +24,7 @@
   "dependencies": {
     "bluebird": "^3.3.5",
     "config": "^1.20.1",
-    "hapiest-vo": "^0.0.3",
+    "hapiest-vo": "^0.0.4",
     "joi": "^8.1.0",
     "mysql": "^2.10.2",
     "squel": "^5.2.1"

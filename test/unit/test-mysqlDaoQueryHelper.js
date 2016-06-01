@@ -38,6 +38,30 @@ describe('MysqlDaoQueryHelper', function() {
             sql.should.eql(`INSERT INTO users (first_name, last_name, password) VALUES ('firstName', 'lastName', 'boom!')`);
         });
 
+        it('Should generate an INSERT statement for a single entry in users table from an object with toJsObj() function defined', function() {
+            const obj = {
+                toJsObj: function() {
+                    return {firstName: 'firstName', lastName: 'lastName', password: 'boom!'};
+                }
+            };
+            const sql = mysqlDaoQueryHelper.create(obj);
+            Should.exist(sql);
+
+            sql.should.eql(`INSERT INTO users (first_name, last_name, password) VALUES ('firstName', 'lastName', 'boom!')`);
+        });
+
+        it('Should generate an INSERT statement for a single entry in users table from an object with toJSON() function defined', function() {
+            const obj = {
+                toJSON: function() {
+                    return {firstName: 'Bob', lastName: 'Smith', password: 'another password'};
+                }
+            };
+            const sql = mysqlDaoQueryHelper.create(obj);
+            Should.exist(sql);
+
+            sql.should.eql(`INSERT INTO users (first_name, last_name, password) VALUES ('Bob', 'Smith', 'another password')`);
+        });
+
     });
 
     describe('createBulk', function() {
