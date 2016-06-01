@@ -2,6 +2,7 @@
 
 const Should = require('should');
 const Mysql = require('mysql');
+const Squel = require('squel');
 const VO = require('hapiest-vo');
 
 const MysqlDaoQueryHelper = require('../../lib/mysqlDaoQueryHelper');
@@ -93,7 +94,14 @@ describe('MysqlDaoQueryHelper', function() {
             Should.exist(sql);
 
             sql.should.eql("SELECT * FROM users WHERE (url = 'http://www.youtube.com/?q=somevideo') LIMIT 1");
-        })
+        });
+
+        it('Should generate an IS NULL in where clause ', function() {
+            const sql = mysqlDaoQueryHelper.getOne({firstName: null, lastName: 'Doe'});
+            Should.exist(sql);
+
+            sql.should.eql("SELECT * FROM users WHERE (first_name IS NULL) AND (last_name = 'Doe') LIMIT 1");
+        });
 
     });
 
@@ -124,6 +132,13 @@ describe('MysqlDaoQueryHelper', function() {
             sql.should.eql("UPDATE users SET email = 'john.doe@gmail.com', first_name = 'john' WHERE (id = 1) LIMIT 1");
         });
 
+        it('Should generate an UPDATE statement and not escape CURRENT_TIMESTAMP', function() {
+            const sql = mysqlDaoQueryHelper.updateOne({id: 1}, {email: 'john.doe@gmail.com', dateDeleted: 'CURRENT_TIMESTAMP'});
+            Should.exist(sql);
+
+            sql.should.eql("UPDATE users SET email = 'john.doe@gmail.com', date_deleted = CURRENT_TIMESTAMP WHERE (id = 1) LIMIT 1");
+        });
+
     });
 
     describe('deleteOne', function() {
@@ -133,6 +148,120 @@ describe('MysqlDaoQueryHelper', function() {
             Should.exist(sql);
 
             sql.should.eql("DELETE FROM users WHERE (id = 1) LIMIT 1");
+        });
+
+    });
+
+    describe('_cleanAndMapValues', function() {
+
+        it('Should convert camelCase property names to snakecase property names', function() {
+            const output = mysqlDaoQueryHelper._cleanAndMapValues({firstName: 'John', lastName: 'Doe'});
+            Should.exist(output);
+            output.should.have.properties(['first_name','last_name']);
+            output.first_name.should.eql("'John'");
+            output.last_name.should.eql("'Doe'");
+        });
+
+        it('Should converts a VO to JS object and cleans that', function() {
+            const input = new UserCreateArgs({firstName: 'firstName', lastName: 'lastName', password: 'boom!'});
+            const output = mysqlDaoQueryHelper._cleanAndMapValues(input);
+            Should.exist(output);
+            output.should.have.properties(['first_name','last_name','password']);
+            output.first_name.should.eql("'firstName'");
+            output.last_name.should.eql("'lastName'");
+            output.password.should.eql("'boom!'");
+        });
+
+        it('Should converts an object with toJsObj defined cleans that', function() {
+            const output = mysqlDaoQueryHelper._cleanAndMapValues({
+                toJsObj: function() {
+                    return {firstName: 'firstName', lastName: 'lastName', password: 'boom!'};
+                }
+            });
+            Should.exist(output);
+            output.should.have.properties(['first_name','last_name','password']);
+            output.first_name.should.eql("'firstName'");
+            output.last_name.should.eql("'lastName'");
+            output.password.should.eql("'boom!'");
+        });
+
+        it('Should converts an object with toJSON defined cleans that', function() {
+            const output = mysqlDaoQueryHelper._cleanAndMapValues({
+                toJSON: function() {
+                    return {firstName: 'John', lastName: 'Doe', password: 'another'};
+                }
+            });
+            Should.exist(output);
+            output.should.have.properties(['first_name','last_name','password']);
+            output.first_name.should.eql("'John'");
+            output.last_name.should.eql("'Doe'");
+            output.password.should.eql("'another'");
+        });
+
+        it('Drops arrays and objects', function() {
+            const output = mysqlDaoQueryHelper._cleanAndMapValues({
+                firstName: 'firstName',
+                lastName: 'lastName',
+                password: 'boom!',
+                wontBeInOutput: [],
+                alsoWontBeThere: {}
+            });
+            Should.exist(output);
+            output.should.have.properties(['first_name','last_name','password']);
+            output.should.not.have.properties(['wont_be_in_output','also_wont_be_there']);
+            output.first_name.should.eql("'firstName'");
+            output.last_name.should.eql("'lastName'");
+            output.password.should.eql("'boom!'");
+        });
+
+        it('Allows special value CURRENT_TIMESTAMP and does not escape with quotes', function() {
+            const output = mysqlDaoQueryHelper._cleanAndMapValues({
+                firstName: 'firstName',
+                dateCreated: 'CURRENT_TIMESTAMP',
+                dateAgain: 'NOW()'
+            });
+            Should.exist(output);
+            output.should.have.properties(['first_name','date_created']);
+            output.first_name.should.eql("'firstName'");
+            output.date_created.should.eql("CURRENT_TIMESTAMP");
+            output.date_again.should.eql("NOW()");
+        });
+
+        it('Escapes special value CURRENT_TIMESTAMP when explicitly asked', function() {
+            const output = mysqlDaoQueryHelper._cleanAndMapValues({
+                firstName: 'firstName',
+                dateCreated: 'CURRENT_TIMESTAMP',
+                dateAgain: 'NOW()'
+            }, {dontCleanMysqlFunctions: false});
+            Should.exist(output);
+            output.should.have.properties(['first_name','date_created']);
+            output.first_name.should.eql("'firstName'");
+            output.date_created.should.eql("'CURRENT_TIMESTAMP'");
+            output.date_again.should.eql("'NOW()'");
+        });
+
+    });
+
+    describe('_appendWhereClause', function() {
+
+        it('Should generate good WHERE clause for standard object input', function() {
+            const sqlObj = Squel.select().from('users');
+
+            mysqlDaoQueryHelper._appendWhereClause(sqlObj, {firstName: 'John', lastName: 'Doe'});
+
+            const sqlString = sqlObj.toString();
+
+            sqlString.should.eql("SELECT * FROM users WHERE (first_name = 'John') AND (last_name = 'Doe')");
+        });
+
+        it('Should generate good WHERE clause when input contains NULL value', function() {
+            const sqlObj = Squel.select().from('users');
+
+            mysqlDaoQueryHelper._appendWhereClause(sqlObj, {firstName: 'John', lastName: null});
+
+            const sqlString = sqlObj.toString();
+
+            sqlString.should.eql("SELECT * FROM users WHERE (first_name = 'John') AND (last_name IS NULL)");
         });
 
     });
