@@ -240,6 +240,20 @@ describe('MysqlDaoQueryHelper', function() {
             output.date_again.should.eql("'NOW()'");
         });
 
+        it('Convert undefined value to null', function() {
+            const someObj = {firstName: 'John', lastName: 'Doe'};
+            const output = mysqlDaoQueryHelper._cleanAndMapValues({
+                firstName: someObj.firstName,
+                lastName: someObj.lastName,
+                password: someObj.password
+            });
+            Should.exist(output);
+            output.should.have.properties(['first_name','last_name','password']);
+            output.first_name.should.eql("'John'");
+            output.last_name.should.eql("'Doe'");
+            output.password.should.eql("NULL");
+        });
+
     });
 
     describe('_appendWhereClause', function() {
@@ -258,6 +272,17 @@ describe('MysqlDaoQueryHelper', function() {
             const sqlObj = Squel.select().from('users');
 
             mysqlDaoQueryHelper._appendWhereClause(sqlObj, {firstName: 'John', lastName: null});
+
+            const sqlString = sqlObj.toString();
+
+            sqlString.should.eql("SELECT * FROM users WHERE (first_name = 'John') AND (last_name IS NULL)");
+        });
+
+        it('Should generate good WHERE clause when input contains undefined value (assumes it means NULL)', function() {
+            const sqlObj = Squel.select().from('users');
+
+            const someObj = {firstName: 'John'};
+            mysqlDaoQueryHelper._appendWhereClause(sqlObj, {firstName: someObj.firstName, lastName: someObj.lastName});
 
             const sqlString = sqlObj.toString();
 
