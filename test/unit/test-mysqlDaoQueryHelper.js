@@ -152,6 +152,54 @@ describe('MysqlDaoQueryHelper', function() {
 
     });
 
+    describe('clean', function() {
+        it('Should clean value passed in', function() {
+            const uncleanValue = "some unclean value with ' single quote";
+            const cleanValue = mysqlDaoQueryHelper.clean(uncleanValue);
+
+            Should.exist(cleanValue);
+            cleanValue.should.eql("'some unclean value with \\' single quote'");
+        });
+
+        it('Should escape all strings, even special MySQL functions', function() {
+            const currentTimestampUnclean = "current_timestamp";
+            const currentTimestampClean = mysqlDaoQueryHelper.clean(currentTimestampUnclean);
+
+            Should.exist(currentTimestampClean);
+            currentTimestampClean.should.eql("'current_timestamp'");
+
+            const nowUnclean = "NOW()";
+            const nowClean = mysqlDaoQueryHelper.clean(nowUnclean);
+
+            Should.exist(nowClean);
+            nowClean.should.eql("'NOW()'");
+        });
+    });
+
+    describe('cleanSpecial', function() {
+        it('Should clean value passed in', function() {
+            const uncleanValue = "some unclean value with ' single quote";
+            const cleanValue = mysqlDaoQueryHelper.cleanSpecial(uncleanValue);
+
+            Should.exist(cleanValue);
+            cleanValue.should.eql("'some unclean value with \\' single quote'");
+        });
+
+        it('Should allow special MySQL functions to pass through uncleaned', function() {
+            const currentTimestampUnclean = "current_timestamp";
+            const currentTimestampClean = mysqlDaoQueryHelper.cleanSpecial(currentTimestampUnclean);
+
+            Should.exist(currentTimestampClean);
+            currentTimestampClean.should.eql("current_timestamp");
+
+            const nowUnclean = "NOW()";
+            const nowClean = mysqlDaoQueryHelper.cleanSpecial(nowUnclean);
+
+            Should.exist(nowClean);
+            nowClean.should.eql("NOW()");
+        });
+    });
+
     describe('_cleanAndMapValues', function() {
 
         it('Should convert camelCase property names to snakecase property names', function() {

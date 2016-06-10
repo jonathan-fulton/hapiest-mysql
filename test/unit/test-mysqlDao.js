@@ -372,5 +372,53 @@ describe('MysqlDao', function() {
         });
     });
 
+    describe('clean', function() {
+        it('Should clean value passed in', function() {
+            const uncleanValue = "some unclean value with ' single quote";
+            const cleanValue = userDao.clean(uncleanValue);
+
+            Should.exist(cleanValue);
+            cleanValue.should.eql("'some unclean value with \\' single quote'");
+        });
+
+        it('Should escape all strings, even special MySQL functions', function() {
+            const currentTimestampUnclean = "current_timestamp";
+            const currentTimestampClean = userDao.clean(currentTimestampUnclean);
+
+            Should.exist(currentTimestampClean);
+            currentTimestampClean.should.eql("'current_timestamp'");
+
+            const nowUnclean = "NOW()";
+            const nowClean = userDao.clean(nowUnclean);
+
+            Should.exist(nowClean);
+            nowClean.should.eql("'NOW()'");
+        });
+    });
+
+    describe('cleanSpecial', function() {
+        it('Should clean value passed in', function() {
+            const uncleanValue = "some unclean value with ' single quote";
+            const cleanValue = userDao.cleanSpecial(uncleanValue);
+
+            Should.exist(cleanValue);
+            cleanValue.should.eql("'some unclean value with \\' single quote'");
+        });
+
+        it('Should allow special MySQL functions to pass through uncleaned', function() {
+            const currentTimestampUnclean = "current_timestamp";
+            const currentTimestampClean = userDao.cleanSpecial(currentTimestampUnclean);
+
+            Should.exist(currentTimestampClean);
+            currentTimestampClean.should.eql("current_timestamp");
+
+            const nowUnclean = "NOW()";
+            const nowClean = userDao.cleanSpecial(nowUnclean);
+
+            Should.exist(nowClean);
+            nowClean.should.eql("NOW()");
+        });
+    });
+
 });
 
