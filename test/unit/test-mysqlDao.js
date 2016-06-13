@@ -234,6 +234,37 @@ describe('MysqlDao', function() {
         });
     });
 
+    describe('getOneFromSqlRaw', function() {
+        beforeEach(databaseSetup);
+
+        it('Should fetch a single row by email and first name with only email and first_name return in the results', function() {
+            let newId = null;
+            return userDao.create({firstName: 'John', lastName: 'Doe', email: 'john.doe@gmail.com'})
+                .then(id => { newId = id})
+                .then(() => {
+                    const createPromise = userDao.create({firstName: 'Jane', lastName: 'Doe', email: 'jane.doe@gmail.com'}); // Add this to make sure the ID lookup actually does something
+                    return Promise.all([createPromise]);
+                })
+                .then(() => {
+                    const sql = "SELECT email, first_name FROM users WHERE first_name='Jane' AND email='jane.doe@gmail.com'";
+                    const checkRowPromise = userDao.getOneFromSqlRaw(sql)
+                        .then(user => {
+                            Should.exist(user);
+                            Should.not.exist(user.id);
+                            Should.not.exist(user.lastName);
+                            Should.not.exist(user.dateCreated);
+
+                            Should.exist(user.email);
+                            Should.exist(user.first_name);
+
+                            user.email.should.eql('jane.doe@gmail.com');
+                            user.first_name.should.eql('Jane');
+                        });
+                    return Promise.all([checkRowPromise]);
+                });
+        });
+    });
+
     describe('getAll', function() {
         beforeEach(databaseSetup);
 
@@ -249,6 +280,49 @@ describe('MysqlDao', function() {
                             Should.exist(users);
                             users.should.be.an.Array();
                             users.length.should.eql(2);
+
+                            users[0].should.be.an.instanceOf(User);
+                            users[0].firstName.should.eql('John');
+                            users[0].lastName.should.eql('Doe');
+                            users[0].email.should.eql('john.doe@gmail.com');
+
+                            users[1].should.be.an.instanceOf(User);
+                            users[1].firstName.should.eql('Jane');
+                            users[1].lastName.should.eql('Doe');
+                            users[1].email.should.eql('jane.doe@gmail.com');
+                        });
+
+                    return Promise.all([checkRowPromise1]);
+                });
+        });
+    });
+
+    describe('getAllFromSqlRaw', function() {
+        beforeEach(databaseSetup);
+
+        it('Should return two rows with only first_name populated', function() {
+            return userDao.createBulk([
+                    {firstName: 'John', lastName: 'Doe', email: 'john.doe@gmail.com'},
+                    {firstName: 'Jane', lastName: 'Doe', email: 'jane.doe@gmail.com'}
+                ])
+                .then((numRows) => {
+
+                    const sql = "SELECT first_name FROM users WHERE last_name='Doe'";
+                    const checkRowPromise1 = userDao.getAllFromSqlRaw(sql)
+                        .then(dbRows => {
+                            Should.exist(dbRows);
+                            dbRows.should.be.an.Array();
+                            dbRows.length.should.eql(2);
+
+                            dbRows[0].first_name.should.eql('John');
+                            dbRows[1].first_name.should.eql('Jane');
+
+                            Should.not.exist(dbRows[0].email);
+                            Should.not.exist(dbRows[0].firstName);
+                            Should.not.exist(dbRows[0].lastName);
+                            Should.not.exist(dbRows[1].email);
+                            Should.not.exist(dbRows[1].firstName);
+                            Should.not.exist(dbRows[1].lastName);
                         });
 
                     return Promise.all([checkRowPromise1]);
