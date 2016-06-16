@@ -39,8 +39,7 @@ describe('MysqlDatabaseSetup', function() {
             return mysqlDatabaseSetup.replicateAllTables()
                 .then(() => {
                     const sql = `SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = '${testDbConnection.database}'ORDER BY TABLE_NAME ASC`;
-                    const validationPromise =
-                        mysqlServiceForTestDb.selectAll(sql)
+                    return mysqlServiceForTestDb.selectAll(sql)
                         .then(tableNameRows => tableNameRows.map(tableNameRow => tableNameRow.TABLE_NAME))
                         .then(tables => {
                             Should.exist(tables);
@@ -51,7 +50,44 @@ describe('MysqlDatabaseSetup', function() {
                             tables[1].should.eql('user_downloads');
                             tables[2].should.eql('videos');
                         });
-                    return Promise.all([validationPromise]);
+                });
+        });
+
+        it('Should copy over three tables from the source database and reset AUTO_INCREMENT values to 1', function() {
+
+            const resetAutoIncrement = true;
+            return mysqlDatabaseSetup.replicateAllTables(resetAutoIncrement)
+                .then(() => {
+                    const sql = `SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = '${testDbConnection.database}'ORDER BY TABLE_NAME ASC`;
+                    return mysqlServiceForTestDb.selectAll(sql)
+                            .then(tableNameRows => tableNameRows.map(tableNameRow => tableNameRow.TABLE_NAME))
+                            .then(tables => {
+                                Should.exist(tables);
+                                tables.should.be.an.Array();
+                                tables.length.should.eql(3);
+
+                                tables[0].should.eql('users');
+                                tables[1].should.eql('user_downloads');
+                                tables[2].should.eql('videos');
+                            })
+                            .then(() => {
+                                const sql = `INSERT INTO users (first_name, last_name, email) VALUES ('John', 'Doe', 'john.doe@gmail.com');`;
+                                return mysqlServiceForTestDb.insert(sql);
+                            })
+                            .then(result => {
+                                Should.exist(result);
+                                Should.exist(result.insertId);
+                                result.insertId.should.eql(1);
+                            })
+                            .then(() => {
+                                const sql = `INSERT INTO videos (title, url) VALUES ('video 1', 'http://www.youtube.com/video1')`;
+                                return mysqlServiceForTestDb.insert(sql);
+                            })
+                            .then(result => {
+                                Should.exist(result);
+                                Should.exist(result.insertId);
+                                result.insertId.should.eql(1);
+                            });
                 });
         });
 
@@ -67,8 +103,7 @@ describe('MysqlDatabaseSetup', function() {
             return mysqlDatabaseSetup.replicateTables(['users', 'videos'])
                 .then(() => {
                     const sql = `SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = '${testDbConnection.database}'ORDER BY TABLE_NAME ASC`;
-                    const validationPromise =
-                        mysqlServiceForTestDb.selectAll(sql)
+                    return mysqlServiceForTestDb.selectAll(sql)
                         .then(tableNameRows => tableNameRows.map(tableNameRow => tableNameRow.TABLE_NAME))
                         .then(tables => {
                             Should.exist(tables);
@@ -78,7 +113,42 @@ describe('MysqlDatabaseSetup', function() {
                             tables[0].should.eql('users');
                             tables[1].should.eql('videos');
                         });
-                    return Promise.all([validationPromise]);
+                });
+        });
+
+        it('Should copy over three tables from the source database and reset AUTO_INCREMENT values to 1', function() {
+            const resetAutoIncrement = true;
+            return mysqlDatabaseSetup.replicateTables(['users', 'videos'], resetAutoIncrement)
+                .then(() => {
+                    const sql = `SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = '${testDbConnection.database}'ORDER BY TABLE_NAME ASC`;
+                    return mysqlServiceForTestDb.selectAll(sql)
+                        .then(tableNameRows => tableNameRows.map(tableNameRow => tableNameRow.TABLE_NAME))
+                        .then(tables => {
+                            Should.exist(tables);
+                            tables.should.be.an.Array();
+                            tables.length.should.eql(2);
+
+                            tables[0].should.eql('users');
+                            tables[1].should.eql('videos');
+                        })
+                        .then(() => {
+                            const sql = `INSERT INTO users (first_name, last_name, email) VALUES ('John', 'Doe', 'john.doe@gmail.com');`;
+                            return mysqlServiceForTestDb.insert(sql);
+                        })
+                        .then(result => {
+                            Should.exist(result);
+                            Should.exist(result.insertId);
+                            result.insertId.should.eql(1);
+                        })
+                        .then(() => {
+                            const sql = `INSERT INTO videos (title, url) VALUES ('video 1', 'http://www.youtube.com/video1')`;
+                            return mysqlServiceForTestDb.insert(sql);
+                        })
+                        .then(result => {
+                            Should.exist(result);
+                            Should.exist(result.insertId);
+                            result.insertId.should.eql(1);
+                        });
                 });
         });
 
@@ -91,12 +161,10 @@ describe('MysqlDatabaseSetup', function() {
 
         it('Should copy data for three tables from the source database', function() {
             return mysqlDatabaseSetup.replicateAllTables()
-                .then(() => {
-                    return Promise.all([mysqlDatabaseSetup.copyDataForAllTables()])
-                })
+                .then(() => mysqlDatabaseSetup.copyDataForAllTables())
                 .then(() => {
                     const sqlQueries = [`SELECT * FROM users`, `SELECT * FROM videos`, `SELECT * FROM user_downloads`];
-                    const validationPromise = mysqlServiceForTestDb.executeQueries(sqlQueries)
+                    return mysqlServiceForTestDb.executeQueries(sqlQueries)
                         .then(results => {
 
                             Should.exist(results);
@@ -138,7 +206,6 @@ describe('MysqlDatabaseSetup', function() {
                             download2.user_id.should.eql(1);
                             download2.video_id.should.eql(2);
                         });
-                    return Promise.all([validationPromise]);
                 });
         });
 
@@ -157,8 +224,7 @@ describe('MysqlDatabaseSetup', function() {
                 })
                 .then(() => {
                     const sqlQueries = [`SELECT * FROM users`, `SELECT * FROM videos`, `SELECT * FROM user_downloads`];
-                    const queryPromise =
-                        mysqlServiceForTestDb.executeQueries(sqlQueries)
+                    return mysqlServiceForTestDb.executeQueries(sqlQueries)
                         .then(results => {
 
                             Should.exist(results);
@@ -180,8 +246,6 @@ describe('MysqlDatabaseSetup', function() {
                             Should.exist(results[2]); // No downloads copied over
                             Should.not.exist(results[2][0]);
                         });
-
-                    return Promise.all([queryPromise]);
                 });
         });
 
@@ -194,21 +258,14 @@ describe('MysqlDatabaseSetup', function() {
 
         it('Should drop all tables', function() {
             return mysqlDatabaseSetup.replicateAllTables()
-                .then(() => {
-                    return Promise.all([mysqlDatabaseSetup.getAllTablesFromCurrentDatabase()]).then(results => results[0]);
-                })
+                .then(() => mysqlDatabaseSetup.getAllTablesFromCurrentDatabase())
                 .then(tables => {
                     Should.exist(tables);
                     tables.should.be.an.Array();
                     tables.length.should.eql(3);
                 })
-                .then(() => {
-                    return Promise.all([mysqlDatabaseSetup.dropAllTables()]);
-                })
-                .then(() => {
-                    const allTablesPromise = mysqlDatabaseSetup.getAllTablesFromCurrentDatabase();
-                    return Promise.all([allTablesPromise]).then(results => results[0]);
-                })
+                .then(() => mysqlDatabaseSetup.dropAllTables())
+                .then(() => mysqlDatabaseSetup.getAllTablesFromCurrentDatabase())
                 .then(tables => {
                     Should.exist(tables);
                     tables.should.be.an.Array();
@@ -225,21 +282,14 @@ describe('MysqlDatabaseSetup', function() {
 
         it('Should drop the users table', function() {
             return mysqlDatabaseSetup.replicateAllTables()
-                .then(() => {
-                    return Promise.all([mysqlDatabaseSetup.getAllTablesFromCurrentDatabase()]).then(results => results[0]);
-                })
+                .then(() => mysqlDatabaseSetup.getAllTablesFromCurrentDatabase())
                 .then(tables => {
                     Should.exist(tables);
                     tables.should.be.an.Array();
                     tables.length.should.eql(3);
                 })
-                .then(() => {
-                    return Promise.all([mysqlDatabaseSetup.dropTables(['users'])]);
-                })
-                .then(() => {
-                    const allTablesPromise = mysqlDatabaseSetup.getAllTablesFromCurrentDatabase();
-                    return Promise.all([allTablesPromise]).then(results => results[0]);
-                })
+                .then(() => mysqlDatabaseSetup.dropTables(['users']))
+                .then(() => mysqlDatabaseSetup.getAllTablesFromCurrentDatabase())
                 .then(tables => {
                     Should.exist(tables);
                     tables.should.be.an.Array();
@@ -277,12 +327,8 @@ describe('MysqlDatabaseSetup', function() {
                     tables.should.be.an.Array();
                     tables.length.should.eql(0);
                 })
-                .then(() => {
-                    return Promise.all([mysqlDatabaseSetup.replicateAllTables()]);
-                })
-                .then(() => {
-                    return Promise.all([mysqlDatabaseSetup.getAllTablesFromCurrentDatabase()]).then(results => results[0]);
-                })
+                .then(() => mysqlDatabaseSetup.replicateAllTables())
+                .then(() => mysqlDatabaseSetup.getAllTablesFromCurrentDatabase())
                 .then(tables => {
                     Should.exist(tables);
                     tables.should.be.an.Array();
@@ -297,16 +343,12 @@ describe('MysqlDatabaseSetup', function() {
 
 function setupSourceDatabase() {
     return _dropTables(mysqlServiceForSourceDb)
-        .then(() => {
-            return Promise.all([_createTables(mysqlServiceForSourceDb)]);
-        });
+        .then(() => _createTables(mysqlServiceForSourceDb));
 }
 
 function cleanupDatabases() {
     return _dropTables(mysqlServiceForSourceDb)
-        .then(() => {
-            return Promise.all([_dropTables(mysqlServiceForTestDb)]);
-        });
+        .then(() => _dropTables(mysqlServiceForTestDb));
 }
 
 /**
