@@ -369,6 +369,17 @@ describe('MysqlDaoQueryHelper', function() {
             sqlString.should.eql("SELECT * FROM users WHERE (first_name = 'John') AND (last_name IS NULL)");
         });
 
+        it('Should generate good WHERE clause when input contains special functions', function() {
+            const sqlObj = Squel.select().from('users');
+
+            const someObj = {firstName: 'John'};
+            mysqlDaoQueryHelper._appendWhereClause(sqlObj, {dateCreated: 'CURRENT_TIMESTAMP', dateUpdated: 'NOW()', email: 'IS NULL', firstName: 'IS NOT NULL'});
+
+            const sqlString = sqlObj.toString();
+
+            sqlString.should.eql("SELECT * FROM users WHERE (date_created = CURRENT_TIMESTAMP) AND (date_updated = NOW()) AND (email IS NULL) AND (first_name IS NOT NULL)");
+        });
+
     });
 
 });
