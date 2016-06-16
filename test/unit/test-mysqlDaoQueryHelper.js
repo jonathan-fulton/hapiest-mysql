@@ -173,6 +173,18 @@ describe('MysqlDaoQueryHelper', function() {
 
             Should.exist(nowClean);
             nowClean.should.eql("'NOW()'");
+
+            const isNullUnclean = "IS NULL";
+            const isNullClean = mysqlDaoQueryHelper.clean(isNullUnclean);
+
+            Should.exist(isNullClean);
+            isNullClean.should.eql("'IS NULL'");
+
+            const isNotNullUnclean = "IS NOT NULL";
+            const isNotNullClean = mysqlDaoQueryHelper.clean(isNotNullUnclean);
+
+            Should.exist(isNotNullClean);
+            isNotNullClean.should.eql("'IS NOT NULL'");
         });
     });
 
@@ -197,6 +209,18 @@ describe('MysqlDaoQueryHelper', function() {
 
             Should.exist(nowClean);
             nowClean.should.eql("NOW()");
+
+            const isNullUnclean = "IS NULL";
+            const isNullClean = mysqlDaoQueryHelper.cleanSpecial(isNullUnclean);
+
+            Should.exist(isNullClean);
+            isNullClean.should.eql("IS NULL");
+
+            const isNotNullUnclean = "IS NOT NULL";
+            const isNotNullClean = mysqlDaoQueryHelper.cleanSpecial(isNotNullUnclean);
+
+            Should.exist(isNotNullClean);
+            isNotNullClean.should.eql("IS NOT NULL");
         });
     });
 
@@ -262,30 +286,38 @@ describe('MysqlDaoQueryHelper', function() {
             output.password.should.eql("'boom!'");
         });
 
-        it('Allows special value CURRENT_TIMESTAMP and does not escape with quotes', function() {
+        it('Allows special values (CURRENT_TIMESTAMP, NOW(), IS NULL, IS NOT NULL) and does not escape with quotes', function() {
             const output = mysqlDaoQueryHelper._cleanAndMapValues({
                 firstName: 'firstName',
                 dateCreated: 'CURRENT_TIMESTAMP',
-                dateAgain: 'NOW()'
+                dateAgain: 'NOW()',
+                someNullField: 'IS NULL',
+                nonNullField: 'IS NOT NULL'
             });
             Should.exist(output);
             output.should.have.properties(['first_name','date_created']);
             output.first_name.should.eql("'firstName'");
             output.date_created.should.eql("CURRENT_TIMESTAMP");
             output.date_again.should.eql("NOW()");
+            output.some_null_field.should.eql("IS NULL");
+            output.non_null_field.should.eql("IS NOT NULL");
         });
 
-        it('Escapes special value CURRENT_TIMESTAMP when explicitly asked', function() {
+        it('Escapes special values (CURRENT_TIMESTAMP, NOW(), IS NULL, IS NOT NULL) when explicitly asked', function() {
             const output = mysqlDaoQueryHelper._cleanAndMapValues({
                 firstName: 'firstName',
                 dateCreated: 'CURRENT_TIMESTAMP',
-                dateAgain: 'NOW()'
+                dateAgain: 'NOW()',
+                someNullField: 'IS NULL',
+                nonNullField: 'IS NOT NULL'
             }, {dontCleanMysqlFunctions: false});
             Should.exist(output);
             output.should.have.properties(['first_name','date_created']);
             output.first_name.should.eql("'firstName'");
             output.date_created.should.eql("'CURRENT_TIMESTAMP'");
             output.date_again.should.eql("'NOW()'");
+            output.some_null_field.should.eql("'IS NULL'");
+            output.non_null_field.should.eql("'IS NOT NULL'");
         });
 
         it('Convert undefined value to null', function() {

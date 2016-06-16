@@ -467,6 +467,18 @@ describe('MysqlDao', function() {
 
             Should.exist(nowClean);
             nowClean.should.eql("'NOW()'");
+
+            const isNullUnclean = "IS NULL";
+            const isNullClean = userDao.clean(isNullUnclean);
+
+            Should.exist(isNullClean);
+            isNullClean.should.eql("'IS NULL'");
+
+            const isNotNullUnclean = "IS NOT NULL";
+            const isNotNullClean = userDao.clean(isNotNullUnclean);
+
+            Should.exist(isNotNullClean);
+            isNotNullClean.should.eql("'IS NOT NULL'");
         });
     });
 
@@ -491,6 +503,18 @@ describe('MysqlDao', function() {
 
             Should.exist(nowClean);
             nowClean.should.eql("NOW()");
+
+            const isNullUnclean = "IS NULL";
+            const isNullClean = userDao.cleanSpecial(isNullUnclean);
+
+            Should.exist(isNullClean);
+            isNullClean.should.eql("IS NULL");
+
+            const isNotNullUnclean = "IS NOT NULL";
+            const isNotNullClean = userDao.cleanSpecial(isNotNullUnclean);
+
+            Should.exist(isNotNullClean);
+            isNotNullClean.should.eql("IS NOT NULL");
         });
     });
 
