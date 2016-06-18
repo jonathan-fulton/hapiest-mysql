@@ -139,6 +139,13 @@ describe('MysqlDaoQueryHelper', function() {
             sql.should.eql("UPDATE users SET email = 'john.doe@gmail.com', date_deleted = CURRENT_TIMESTAMP WHERE (id = 1) LIMIT 1");
         });
 
+        it('Should work even with ? in WHERE clause for one row', function() {
+            const sql = mysqlDaoQueryHelper.updateOne({url: 'http://some.com/?blah=hello'}, {email: 'john.doe@gmail.com', firstName: 'john'});
+            Should.exist(sql);
+
+            sql.should.eql("UPDATE users SET email = 'john.doe@gmail.com', first_name = 'john' WHERE (url = 'http://some.com/?blah=hello') LIMIT 1");
+        });
+
     });
 
     describe('deleteOne', function() {
@@ -148,6 +155,13 @@ describe('MysqlDaoQueryHelper', function() {
             Should.exist(sql);
 
             sql.should.eql("DELETE FROM users WHERE (id = 1) LIMIT 1");
+        });
+
+        it('Should generate an DELETE statement even with ? in WHERE clause for one row', function() {
+            const sql = mysqlDaoQueryHelper.deleteOne({url: 'http://some.com/?foo=bar'});
+            Should.exist(sql);
+
+            sql.should.eql("DELETE FROM users WHERE (url = 'http://some.com/?foo=bar') LIMIT 1");
         });
 
     });
