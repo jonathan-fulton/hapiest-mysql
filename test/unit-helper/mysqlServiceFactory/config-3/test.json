@@ -1,0 +1,20 @@
+{
+  "database": {
+    "write": {
+      "host": "localhost",
+      "database": "hapiestmysql",
+      "user": "hapiestmysql",
+      "password": "hapiestmysql",
+      "connectionLimit": 100,
+      "multipleStatements": true
+    },
+    "read": {
+      "host": ["localhost","192.168.99.100"],
+      "database": "hapiestmysql",
+      "user": "hapiestmysql",
+      "password": "hapiestmysql",
+      "connectionLimit": 100,
+      "multipleStatements": true
+    }
+  }
+}

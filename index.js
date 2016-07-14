@@ -1,3 +1,10 @@
 'use strict';
 
-module.exports = require('./lib/mysqlService');
+/**
+ *
+ * @type {{serviceFactory: MysqlServiceFactory, daoArgsFactory: MysqlDaoArgsFactory}}
+ */
+module.exports = {
+    serviceFactory: require('./lib/mysqlServiceFactory'),
+    daoArgsFactory: require('./lib/mysqlDaoArgsFactory')
+};

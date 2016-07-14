@@ -19,7 +19,7 @@ describe('MysqlServiceFactory', function() {
             mysqlService.should.be.an.instanceOf(MysqlService);
 
             mysqlService.should.have.property('_writePool');
-            mysqlService.should.have.property('_readPool');
+            mysqlService.should.have.property('_readPools');
 
             Async.auto({
                 databaseSetup: Async.apply(Internals.databaseSetup, mysqlService),
@@ -54,9 +54,66 @@ describe('MysqlServiceFactory', function() {
             mysqlService.should.be.an.instanceOf(MysqlService);
 
             mysqlService.should.have.property('_writePool');
-            mysqlService.should.have.property('_readPool');
+            mysqlService.should.have.property('_readPools');
 
-            mysqlService._writePool.should.eql(mysqlService._readPool);
+            mysqlService._writePool.should.eql(mysqlService._readPools[0]);
+
+            Async.auto({
+                databaseSetup: Async.apply(Internals.databaseSetup, mysqlService),
+                checkMysqlService: ['databaseSetup', (results, next) => {
+                    mysqlService.selectAll('SELECT * FROM __testing')
+                        .then(results => {
+                            Should.exist(results);
+                            results.should.be.an.Array();
+                            results.length.should.eql(3);
+
+                            results.should.deepEqual([
+                                {id: 1, colInt: 1, colVarchar: 'one'},
+                                {id: 2, colInt: 2, colVarchar: 'two'},
+                                {id: 3, colInt: 3, colVarchar: 'three'}
+                            ]);
+                        })
+                        .then(next)
+                        .catch(err => next(err));
+                }],
+                confirmMultipleStatements: ['databaseSetup', (results, next) => {
+                    mysqlService.executeGenericQuery('SELECT 1 as answer; SELECT 1 as answer;')
+                        .then((results) => {
+                            Should.exist(results);
+                            results.should.be.an.Array();
+                            results.length.should.eql(2);
+
+
+
+                            results[0].should.be.an.Array();
+                            Should.exist(results[0][0]);
+                            Should.exist(results[0][0].answer);
+                            results[0][0].answer.should.eql(1);
+                            results[1].should.be.an.Array();
+                            Should.exist(results[1][0]);
+                            Should.exist(results[1][0].answer);
+                            results[0][0].answer.should.eql(1);
+                        })
+                        .then(next)
+                        .catch(err => next(err));
+                }]
+            }, (err, results) => {
+                Internals.databaseTeardown(mysqlService, (errTeardown) => {
+                    done(err || errTeardown);
+                });
+            });
+        });
+
+        it('Should load from config-3/test.json', function(done) {
+            const nodeConfig = Internals.resetNodeConfig('config-3');
+            const mysqlService = MysqlServiceFactory.createFromNodeConfig(nodeConfig);
+
+            Should.exist(mysqlService);
+            mysqlService.should.be.an.instanceOf(MysqlService);
+
+            mysqlService.should.have.property('_writePool');
+            mysqlService.should.have.property('_readPools');
+            mysqlService._readPools.length.should.eql(2);
 
             Async.auto({
                 databaseSetup: Async.apply(Internals.databaseSetup, mysqlService),

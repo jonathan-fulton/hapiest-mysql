@@ -4,6 +4,7 @@
 
 const Should = require('should');
 const Promise = require('bluebird');
+const Sinon = require('sinon');
 const interceptStdout = require('intercept-stdout');
 
 const MysqlServiceFactory = require('../../lib/mysqlServiceFactory');
@@ -27,7 +28,14 @@ const writeConnectionConfig = {
     password: 'hapiestmysql',
     connectionLimit: 1
 };
-const mysqlService = MysqlServiceFactory.createFromObjWithOnePool(writeConnectionConfig, logger);
+const readConnectionConfig = {
+    host: ['localhost','localhost'],
+    database: 'hapiestmysql',
+    user: 'hapiestmysql',
+    password: 'hapiestmysql',
+    connectionLimit: 1
+};
+const mysqlService = MysqlServiceFactory.createFromObj(writeConnectionConfig, readConnectionConfig, logger);
 
 function databaseSetup(done) {
 
@@ -102,6 +110,28 @@ describe('MysqlService', function() {
                     });
 
             });
+
+            it('Should use all available read pools randomly', function() {
+                // Creating this locally so stubbing functions don't leak to other tests
+                const localMysqlService = MysqlServiceFactory.createFromObj(writeConnectionConfig, readConnectionConfig, logger);
+                const querySpy0 = Sinon.spy(localMysqlService._readPools[0], 'query');
+                const querySpy1 = Sinon.spy(localMysqlService._readPools[1], 'query');
+
+                const queriesToRun = [];
+                for (let i=0; i<10; i++) {
+                    queriesToRun.push('SELECT id, colInt, colVarchar, date_created_timestamp, date_created_datetime, date_created_date FROM __testing ORDER BY id ASC');
+                }
+
+                return Promise.map(queriesToRun, query => localMysqlService.selectOne(query))
+                .then(results => {
+                    Should.exist(results);
+                    results.should.be.an.Array();
+                    results.length.should.eql(10);
+
+                    querySpy0.callCount.should.be.greaterThan(0);
+                    querySpy1.callCount.should.be.greaterThan(0);
+                });
+            })
         });
 
         // @TODO: figure out how to test read from master...need to set up separate databases perhaps?
