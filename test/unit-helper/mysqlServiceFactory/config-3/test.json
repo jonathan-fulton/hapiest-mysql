@@ -9,7 +9,7 @@
       "multipleStatements": true
     },
     "read": {
-      "host": ["localhost","192.168.99.100"],
+      "host": ["localhost","localhost"],
       "database": "hapiestmysql",
       "user": "hapiestmysql",
       "password": "hapiestmysql",
