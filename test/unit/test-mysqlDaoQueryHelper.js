@@ -121,6 +121,13 @@ describe('MysqlDaoQueryHelper', function() {
             sql.should.eql("SELECT * FROM users WHERE (url = 'http://www.youtube.com/?q=somevideo')");
         });
 
+        it('Should allow an array to be passed to WHERE clause', function() {
+            const sql = mysqlDaoQueryHelper.getAll({id: [1,2,5,10]});
+            Should.exist(sql);
+
+            sql.should.eql("SELECT * FROM users WHERE (id IN (1,2,5,10))");
+        });
+
     });
 
     describe('updateOne', function() {
@@ -284,7 +291,7 @@ describe('MysqlDaoQueryHelper', function() {
             output.password.should.eql("'another'");
         });
 
-        it('Drops arrays and objects', function() {
+        it('Drops empty arrays and objects', function() {
             const output = mysqlDaoQueryHelper._cleanAndMapValues({
                 firstName: 'firstName',
                 lastName: 'lastName',
@@ -298,6 +305,21 @@ describe('MysqlDaoQueryHelper', function() {
             output.first_name.should.eql("'firstName'");
             output.last_name.should.eql("'lastName'");
             output.password.should.eql("'boom!'");
+        });
+
+        it('Escapes primitive values in arrays', function() {
+            const output = mysqlDaoQueryHelper._cleanAndMapValues({
+                firstName: 'firstName',
+                lastName: 'lastName',
+                password: 'boom!',
+                idArray: [1,2,{},"'bob",3,4]
+            });
+            Should.exist(output);
+            output.should.have.properties(['first_name','last_name','password','id_array']);
+            output.first_name.should.eql("'firstName'");
+            output.last_name.should.eql("'lastName'");
+            output.password.should.eql("'boom!'");
+            output.id_array.should.deepEqual(['1','2',"\'\\\'bob\'",'3','4'])
         });
 
         it('Allows special values (CURRENT_TIMESTAMP, NOW(), IS NULL, IS NOT NULL) and does not escape with quotes', function() {
