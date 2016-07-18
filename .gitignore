@@ -1,6 +1,6 @@
 # Standard node .gitignore
 node_modules
+npm-debug.log
 
 # WebStorm
 .idea
-
