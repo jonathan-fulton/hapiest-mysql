@@ -390,6 +390,30 @@ describe('MysqlDao', function() {
                     return Promise.all([assertPromise]);
                 });
         });
+
+    });
+
+    describe('updateMultiple', function() {
+        beforeEach(databaseSetup);
+
+        it('Should update both John and Jane Doe users', function() {
+            return userDao.createBulk([
+                {firstName: 'John', lastName: 'Doe', email: 'john.doe@gmail.com'},
+                {firstName: 'Jane', lastName: 'Doe', email: 'jane.doe@gmail.com'}
+            ])
+                .then(() => userDao.updateMultiple({lastName: 'Doe'}, {firstName: 'joe', lastName: 'bob'}))
+                .then(numRowsChanged => {
+                    Should.exist(numRowsChanged);
+                    numRowsChanged.should.eql(2);
+
+                    return userDao.getAll({firstName: 'joe', lastName: 'bob'})
+                })
+                .then(users => {
+                    Should.exist(users);
+                    users.length.should.eql(2);
+                });
+        });
+
     });
 
     describe('deleteById', function() {
@@ -444,6 +468,29 @@ describe('MysqlDao', function() {
                     return Promise.all([assertPromise]);
                 });
         });
+    });
+
+    describe('deleteMultiple', function() {
+        beforeEach(databaseSetup);
+
+        it('Should delete both John and Jane Doe users', function() {
+            return userDao.createBulk([
+                {firstName: 'John', lastName: 'Doe', email: 'john.doe@gmail.com'},
+                {firstName: 'Jane', lastName: 'Doe', email: 'jane.doe@gmail.com'}
+            ])
+                .then(() => userDao.deleteMultiple({lastName: 'Doe'}))
+                .then(numRowsChanged => {
+                    Should.exist(numRowsChanged);
+                    numRowsChanged.should.eql(2);
+
+                    return userDao.getAll({})
+                })
+                .then(users => {
+                    Should.exist(users);
+                    users.length.should.eql(0);
+                });
+        });
+
     });
 
     describe('clean', function() {

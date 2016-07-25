@@ -155,6 +155,17 @@ describe('MysqlDaoQueryHelper', function() {
 
     });
 
+    describe('update', function() {
+
+        it('Should generate an UPDATE statement that has no LIMIT clause', function() {
+            const sql = mysqlDaoQueryHelper.update({id: 1}, {email: 'john.doe@gmail.com', firstName: 'john'});
+            Should.exist(sql);
+
+            sql.should.eql("UPDATE users SET email = 'john.doe@gmail.com', first_name = 'john' WHERE (id = 1)");
+        })
+
+    });
+
     describe('deleteOne', function() {
 
         it('Should generate an DELETE statement for one row', function() {
@@ -170,6 +181,17 @@ describe('MysqlDaoQueryHelper', function() {
 
             sql.should.eql("DELETE FROM users WHERE (url = 'http://some.com/?foo=bar') LIMIT 1");
         });
+
+    });
+
+    describe('delete', function() {
+
+        it('Should generate an DELETE statement that has no LIMIT clause', function() {
+            const sql = mysqlDaoQueryHelper.delete({age: 30});
+            Should.exist(sql);
+
+            sql.should.eql("DELETE FROM users WHERE (age = 30)");
+        })
 
     });
 
