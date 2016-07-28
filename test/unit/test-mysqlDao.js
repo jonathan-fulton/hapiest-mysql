@@ -1,9 +1,9 @@
 'use strict';
 
 const Should = require('should');
-const Mysql = require('mysql');
 const _ = require('lodash');
 const VO = require('hapiest-vo');
+const Sinon = require('sinon');
 
 const MysqlDao = require('../../lib/mysqlDao');
 const MysqlDaoArgsFactory = require('../../lib/mysqlDaoArgsFactory');
@@ -207,6 +207,42 @@ describe('MysqlDao', function() {
 
     });
 
+    describe('getOneByIdFromMaster', function() {
+        beforeEach(databaseSetup);
+        afterEach(() => {
+            if (userDao._mysqlService.selectOneFromMaster.restore) {
+                userDao._mysqlService.selectOneFromMaster.restore();
+            }
+        });
+
+        it('Should fetch a single row by id', function() {
+            let newId = null;
+            const selectOneFromMasterSpy = Sinon.spy(userDao._mysqlService, 'selectOneFromMaster');
+            return userDao.create({firstName: 'John', lastName: 'Doe', email: 'john.doe@gmail.com'})
+                .then(id => { newId = id})
+                .then(() => {
+                    const createPromise = userDao.create({firstName: 'Jane', lastName: 'Doe', email: 'jane.doe@gmail.com'}); // Add this to make sure the ID lookup actually does something
+                    return Promise.all([createPromise]);
+                })
+                .then(() => {
+                    const checkRowPromise = userDao.getOneByIdFromMaster(newId)
+                        .then(user => {
+                            Should.exist(user);
+                            user.should.be.an.instanceOf(User);
+                            user.id.should.be.a.Number();
+                            user.firstName.should.eql('John');
+                            user.lastName.should.eql('Doe');
+                            user.email.should.eql('john.doe@gmail.com');
+                            Should.exist(user.dateCreated);
+
+                            selectOneFromMasterSpy.calledOnce.should.be.True();
+                        });
+                    return Promise.all([checkRowPromise]);
+                });
+        });
+
+    });
+
     describe('getOne', function() {
         beforeEach(databaseSetup);
 
@@ -234,8 +270,79 @@ describe('MysqlDao', function() {
         });
     });
 
+    describe('getOneFromMaster', function() {
+        beforeEach(databaseSetup);
+        afterEach(() => {
+            if (userDao._mysqlService.selectOneFromMaster.restore) {
+                userDao._mysqlService.selectOneFromMaster.restore();
+            }
+        });
+
+        it('Should fetch a single row by email and first name', function() {
+            let newId = null;
+            const selectOneFromMasterSpy = Sinon.spy(userDao._mysqlService, 'selectOneFromMaster');
+            return userDao.create({firstName: 'John', lastName: 'Doe', email: 'john.doe@gmail.com'})
+                .then(id => { newId = id})
+                .then(() => {
+                    const createPromise = userDao.create({firstName: 'Jane', lastName: 'Doe', email: 'jane.doe@gmail.com'}); // Add this to make sure the ID lookup actually does something
+                    return Promise.all([createPromise]);
+                })
+                .then(() => {
+                    const checkRowPromise = userDao.getOneFromMaster({firstName: 'Jane', email: 'jane.doe@gmail.com'})
+                        .then(user => {
+                            Should.exist(user);
+                            user.should.be.an.instanceOf(User);
+                            user.id.should.be.a.Number();
+                            user.firstName.should.eql('Jane');
+                            user.lastName.should.eql('Doe');
+                            user.email.should.eql('jane.doe@gmail.com');
+                            Should.exist(user.dateCreated);
+
+                            selectOneFromMasterSpy.calledOnce.should.be.True();
+                        });
+                    return Promise.all([checkRowPromise]);
+                });
+        });
+    });
+
+    describe('getOneFromSql', function() {
+        beforeEach(databaseSetup);
+
+        it('Should fetch a single row by email and first name with only email and first_name return in the results', function() {
+            let newId = null;
+            return userDao.create({firstName: 'John', lastName: 'Doe', email: 'john.doe@gmail.com'})
+                .then(id => { newId = id})
+                .then(() => {
+                    const createPromise = userDao.create({firstName: 'Jane', lastName: 'Doe', email: 'jane.doe@gmail.com'}); // Add this to make sure the ID lookup actually does something
+                    return Promise.all([createPromise]);
+                })
+                .then(() => {
+                    const sql = "SELECT email, first_name FROM users WHERE first_name='Jane' AND email='jane.doe@gmail.com'";
+                    const checkRowPromise = userDao.getOneFromSql(sql)
+                        .then(user => {
+                            Should.exist(user);
+                            Should.not.exist(user.id);
+                            Should.not.exist(user.lastName);
+                            Should.not.exist(user.dateCreated);
+
+                            Should.exist(user.email);
+                            Should.exist(user.firstName);
+
+                            user.email.should.eql('jane.doe@gmail.com');
+                            user.firstName.should.eql('Jane');
+                        });
+                    return Promise.all([checkRowPromise]);
+                });
+        });
+    });
+
     describe('getOneFromSqlRaw', function() {
         beforeEach(databaseSetup);
+        afterEach(() => {
+            if (userDao._mysqlService.restore) {
+                userDao._mysqlService.restore();
+            }
+        });
 
         it('Should fetch a single row by email and first name with only email and first_name return in the results', function() {
             let newId = null;
@@ -265,6 +372,84 @@ describe('MysqlDao', function() {
         });
     });
 
+    describe('getOneFromSqlFromMaster', function() {
+        beforeEach(databaseSetup);
+        afterEach(() => {
+            if (userDao._mysqlService.selectOneFromMaster.restore) {
+                userDao._mysqlService.selectOneFromMaster.restore();
+            }
+        });
+
+        it('Should fetch a single row by email and first name with only email and first_name return in the results', function() {
+            let newId = null;
+            const selectOneFromMasterSpy = Sinon.spy(userDao._mysqlService, 'selectOneFromMaster');
+            return userDao.create({firstName: 'John', lastName: 'Doe', email: 'john.doe@gmail.com'})
+                .then(id => { newId = id})
+                .then(() => {
+                    const createPromise = userDao.create({firstName: 'Jane', lastName: 'Doe', email: 'jane.doe@gmail.com'}); // Add this to make sure the ID lookup actually does something
+                    return Promise.all([createPromise]);
+                })
+                .then(() => {
+                    const sql = "SELECT email, first_name FROM users WHERE first_name='Jane' AND email='jane.doe@gmail.com'";
+                    const checkRowPromise = userDao.getOneFromSqlFromMaster(sql)
+                        .then(user => {
+                            Should.exist(user);
+                            Should.not.exist(user.id);
+                            Should.not.exist(user.lastName);
+                            Should.not.exist(user.dateCreated);
+
+                            Should.exist(user.email);
+                            Should.exist(user.firstName);
+
+                            user.email.should.eql('jane.doe@gmail.com');
+                            user.firstName.should.eql('Jane');
+
+                            selectOneFromMasterSpy.calledOnce.should.be.True();
+                        });
+                    return Promise.all([checkRowPromise]);
+                });
+        });
+    });
+
+    describe('getOneFromSqlFromMasterRaw', function() {
+        beforeEach(databaseSetup);
+        afterEach(() => {
+            if (userDao._mysqlService.selectOneFromMaster.restore) {
+                userDao._mysqlService.selectOneFromMaster.restore();
+            }
+        });
+
+        it('Should fetch a single row by email and first name with only email and first_name return in the results', function() {
+            let newId = null;
+            const selectOneFromMasterSpy = Sinon.spy(userDao._mysqlService, 'selectOneFromMaster');
+            return userDao.create({firstName: 'John', lastName: 'Doe', email: 'john.doe@gmail.com'})
+                .then(id => { newId = id})
+                .then(() => {
+                    const createPromise = userDao.create({firstName: 'Jane', lastName: 'Doe', email: 'jane.doe@gmail.com'}); // Add this to make sure the ID lookup actually does something
+                    return Promise.all([createPromise]);
+                })
+                .then(() => {
+                    const sql = "SELECT email, first_name FROM users WHERE first_name='Jane' AND email='jane.doe@gmail.com'";
+                    const checkRowPromise = userDao.getOneFromSqlFromMasterRaw(sql)
+                        .then(user => {
+                            Should.exist(user);
+                            Should.not.exist(user.id);
+                            Should.not.exist(user.lastName);
+                            Should.not.exist(user.dateCreated);
+
+                            Should.exist(user.email);
+                            Should.exist(user.first_name);
+
+                            user.email.should.eql('jane.doe@gmail.com');
+                            user.first_name.should.eql('Jane');
+
+                            selectOneFromMasterSpy.calledOnce.should.be.True();
+                        });
+                    return Promise.all([checkRowPromise]);
+                });
+        });
+    });
+
     describe('getAll', function() {
         beforeEach(databaseSetup);
 
@@ -274,7 +459,8 @@ describe('MysqlDao', function() {
                     {firstName: 'Jane', lastName: 'Doe', email: 'jane.doe@gmail.com'}
                 ])
                 .then((numRows) => {
-
+                    Should.exist(numRows);
+                    numRows.should.eql(2);
                     const checkRowPromise1 = userDao.getAll({lastName: 'Doe'})
                         .then(users => {
                             Should.exist(users);
@@ -290,6 +476,119 @@ describe('MysqlDao', function() {
                             users[1].firstName.should.eql('Jane');
                             users[1].lastName.should.eql('Doe');
                             users[1].email.should.eql('jane.doe@gmail.com');
+                        });
+
+                    return Promise.all([checkRowPromise1]);
+                });
+        });
+    });
+
+    describe('getAllFromMaster', function() {
+        beforeEach(databaseSetup);
+        afterEach(() => {
+            if (userDao._mysqlService.selectAllFromMaster.restore) {
+                userDao._mysqlService.selectAllFromMaster.restore();
+            }
+        });
+
+        it('Should return two users', function() {
+            const selectAllFromMasterSpy = Sinon.spy(userDao._mysqlService, 'selectAllFromMaster');
+            return userDao.createBulk([
+                {firstName: 'John', lastName: 'Doe', email: 'john.doe@gmail.com'},
+                {firstName: 'Jane', lastName: 'Doe', email: 'jane.doe@gmail.com'}
+            ])
+                .then((numRows) => {
+                    Should.exist(numRows);
+                    numRows.should.eql(2);
+                    const checkRowPromise1 = userDao.getAllFromMaster({lastName: 'Doe'})
+                        .then(users => {
+                            Should.exist(users);
+                            users.should.be.an.Array();
+                            users.length.should.eql(2);
+
+                            users[0].should.be.an.instanceOf(User);
+                            users[0].firstName.should.eql('John');
+                            users[0].lastName.should.eql('Doe');
+                            users[0].email.should.eql('john.doe@gmail.com');
+
+                            users[1].should.be.an.instanceOf(User);
+                            users[1].firstName.should.eql('Jane');
+                            users[1].lastName.should.eql('Doe');
+                            users[1].email.should.eql('jane.doe@gmail.com');
+
+                            selectAllFromMasterSpy.calledOnce.should.be.True();
+                        });
+
+                    return Promise.all([checkRowPromise1]);
+                });
+        });
+    });
+
+    describe('getAllFromSql', function() {
+        beforeEach(databaseSetup);
+
+        it('Should return two rows with only first_name populated', function() {
+            return userDao.createBulk([
+                {firstName: 'John', lastName: 'Doe', email: 'john.doe@gmail.com'},
+                {firstName: 'Jane', lastName: 'Doe', email: 'jane.doe@gmail.com'}
+            ])
+                .then((numRows) => {
+                    Should.exist(numRows);
+                    numRows.should.eql(2);
+                    const sql = "SELECT first_name FROM users WHERE last_name='Doe'";
+                    const checkRowPromise1 = userDao.getAllFromSql(sql)
+                        .then(dbRows => {
+                            Should.exist(dbRows);
+                            dbRows.should.be.an.Array();
+                            dbRows.length.should.eql(2);
+
+                            dbRows[0].firstName.should.eql('John');
+                            dbRows[1].firstName.should.eql('Jane');
+
+                            Should.not.exist(dbRows[0].email);
+                            Should.not.exist(dbRows[0].lastName);
+                            Should.not.exist(dbRows[1].email);
+                            Should.not.exist(dbRows[1].lastName);
+                        });
+
+                    return Promise.all([checkRowPromise1]);
+                });
+        });
+    });
+
+    describe('getAllFromSqlFromMaster', function() {
+        beforeEach(databaseSetup);
+        afterEach(() => {
+            if (userDao._mysqlService.selectAllFromMaster.restore) {
+                userDao._mysqlService.selectAllFromMaster.restore();
+            }
+        });
+
+        it('Should return two rows with only first_name populated', function() {
+            const selectAllFromMasterSpy = Sinon.spy(userDao._mysqlService, 'selectAllFromMaster');
+            return userDao.createBulk([
+                {firstName: 'John', lastName: 'Doe', email: 'john.doe@gmail.com'},
+                {firstName: 'Jane', lastName: 'Doe', email: 'jane.doe@gmail.com'}
+            ])
+                .then((numRows) => {
+                    Should.exist(numRows);
+                    numRows.should.eql(2);
+                    const sql = "SELECT first_name FROM users WHERE last_name='Doe'";
+                    const checkRowPromise1 = userDao.getAllFromSqlFromMaster(sql)
+                        .then(dbRows => {
+                            Should.exist(dbRows);
+                            dbRows.should.be.an.Array();
+                            dbRows.length.should.eql(2);
+
+                            dbRows[0].firstName.should.eql('John');
+                            dbRows[1].firstName.should.eql('Jane');
+
+                            Should.not.exist(dbRows[0].email);
+                            Should.not.exist(dbRows[0].lastName);
+                            Should.not.exist(dbRows[1].email);
+                            Should.not.exist(dbRows[1].lastName);
+
+                            selectAllFromMasterSpy.calledOnce.should.be.True();
                         });
 
                     return Promise.all([checkRowPromise1]);
@@ -323,6 +622,47 @@ describe('MysqlDao', function() {
                             Should.not.exist(dbRows[1].email);
                             Should.not.exist(dbRows[1].firstName);
                             Should.not.exist(dbRows[1].lastName);
+                        });
+
+                    return Promise.all([checkRowPromise1]);
+                });
+        });
+    });
+
+    describe('getAllFromSqlFromMasterRaw', function() {
+        beforeEach(databaseSetup);
+        afterEach(() => {
+            if (userDao._mysqlService.selectAllFromMaster.restore) {
+                userDao._mysqlService.selectAllFromMaster.restore();
+            }
+        });
+
+        it('Should return two rows with only first_name populated', function() {
+            const selectAllFromMasterSpy = Sinon.spy(userDao._mysqlService, 'selectAllFromMaster');
+            return userDao.createBulk([
+                {firstName: 'John', lastName: 'Doe', email: 'john.doe@gmail.com'},
+                {firstName: 'Jane', lastName: 'Doe', email: 'jane.doe@gmail.com'}
+            ])
+                .then((numRows) => {
+
+                    const sql = "SELECT first_name FROM users WHERE last_name='Doe'";
+                    const checkRowPromise1 = userDao.getAllFromSqlFromMasterRaw(sql)
+                        .then(dbRows => {
+                            Should.exist(dbRows);
+                            dbRows.should.be.an.Array();
+                            dbRows.length.should.eql(2);
+
+                            dbRows[0].first_name.should.eql('John');
+                            dbRows[1].first_name.should.eql('Jane');
+
+                            Should.not.exist(dbRows[0].email);
+                            Should.not.exist(dbRows[0].firstName);
+                            Should.not.exist(dbRows[0].lastName);
+                            Should.not.exist(dbRows[1].email);
+                            Should.not.exist(dbRows[1].firstName);
+                            Should.not.exist(dbRows[1].lastName);
+
+                            selectAllFromMasterSpy.calledOnce.should.be.True();
                         });
 
                     return Promise.all([checkRowPromise1]);
