@@ -4,6 +4,7 @@ const Should = require('should');
 const _ = require('lodash');
 const VO = require('hapiest-vo');
 const Sinon = require('sinon');
+const Faker = require('faker');
 
 const MysqlDao = require('../../lib/mysqlDao');
 const MysqlDaoArgsFactory = require('../../lib/mysqlDaoArgsFactory');
@@ -480,6 +481,296 @@ describe('MysqlDao', function() {
 
                     return Promise.all([checkRowPromise1]);
                 });
+        });
+
+        it('Should return limit to 2 of 5 users', function() {
+            const user1 = {firstName: Faker.name.firstName(), lastName: Faker.name.lastName(), email: Faker.internet.email()};
+            const user2 = {firstName: Faker.name.firstName(), lastName: Faker.name.lastName(), email: Faker.internet.email()};
+            const user3 = {firstName: Faker.name.firstName(), lastName: Faker.name.lastName(), email: Faker.internet.email()};
+            const user4 = {firstName: Faker.name.firstName(), lastName: Faker.name.lastName(), email: Faker.internet.email()};
+            const user5 = {firstName: Faker.name.firstName(), lastName: Faker.name.lastName(), email: Faker.internet.email()};
+            const userData = [user1, user2, user3, user4, user5];
+
+            return userDao.createBulk(userData)
+            .then((numRows) => {
+                Should.exist(numRows);
+                numRows.should.eql(5);
+                const checkRowPromise1 = userDao.getAll({}, { limit: 2 })
+                .then(users => {
+                    Should.exist(users);
+                    users.should.be.an.Array();
+                    users.length.should.eql(2);
+
+                    users[0].should.be.an.instanceOf(User);
+                    users[0].firstName.should.eql(user1.firstName);
+                    users[0].lastName.should.eql(user1.lastName);
+                    users[0].email.should.eql(user1.email);
+
+                    users[1].should.be.an.instanceOf(User);
+                    users[1].firstName.should.eql(user2.firstName);
+                    users[1].lastName.should.eql(user2.lastName);
+                    users[1].email.should.eql(user2.email);
+                });
+
+                return Promise.all([checkRowPromise1]);
+            });
+        });
+
+        it('Should return users in descending order', function() {
+            const user1 = {firstName: Faker.name.firstName(), lastName: Faker.name.lastName(), email: Faker.internet.email()};
+            const user2 = {firstName: Faker.name.firstName(), lastName: Faker.name.lastName(), email: Faker.internet.email()};
+            const user3 = {firstName: Faker.name.firstName(), lastName: Faker.name.lastName(), email: Faker.internet.email()};
+            const user4 = {firstName: Faker.name.firstName(), lastName: Faker.name.lastName(), email: Faker.internet.email()};
+            const user5 = {firstName: Faker.name.firstName(), lastName: Faker.name.lastName(), email: Faker.internet.email()};
+            const userData = [user1, user2, user3, user4, user5].sort(function (a, b) {
+                if (a.email > b.email) return -1;
+                else if (a.email < b.email) return 1;
+                return 0
+            });
+
+            return userDao.createBulk(userData)
+            .then((numRows) => {
+                Should.exist(numRows);
+                numRows.should.eql(5);
+                const checkRowPromise1 = userDao.getAll({}, { sort: { email: 'DESC', lastName: 'DESC' }})
+                .then(users => {
+                    Should.exist(users);
+                    users.should.be.an.Array();
+                    users.length.should.eql(5);
+
+                    users[0].should.be.an.instanceOf(User);
+                    users[0].firstName.should.eql(userData[0].firstName);
+                    users[0].lastName.should.eql(userData[0].lastName);
+                    users[0].email.should.eql(userData[0].email);
+
+                    users[1].should.be.an.instanceOf(User);
+                    users[1].firstName.should.eql(userData[1].firstName);
+                    users[1].lastName.should.eql(userData[1].lastName);
+                    users[1].email.should.eql(userData[1].email);
+
+                    users[2].should.be.an.instanceOf(User);
+                    users[2].firstName.should.eql(userData[2].firstName);
+                    users[2].lastName.should.eql(userData[2].lastName);
+                    users[2].email.should.eql(userData[2].email);
+
+                    users[3].should.be.an.instanceOf(User);
+                    users[3].firstName.should.eql(userData[3].firstName);
+                    users[3].lastName.should.eql(userData[3].lastName);
+                    users[3].email.should.eql(userData[3].email);
+
+                    users[4].should.be.an.instanceOf(User);
+                    users[4].firstName.should.eql(userData[4].firstName);
+                    users[4].lastName.should.eql(userData[4].lastName);
+                    users[4].email.should.eql(userData[4].email);
+                });
+
+                return Promise.all([checkRowPromise1]);
+            });
+        });
+
+        it('Should return the last 2 of 5 users', function() {
+            const user1 = {firstName: Faker.name.firstName(), lastName: Faker.name.lastName(), email: Faker.internet.email()};
+            const user2 = {firstName: Faker.name.firstName(), lastName: Faker.name.lastName(), email: Faker.internet.email()};
+            const user3 = {firstName: Faker.name.firstName(), lastName: Faker.name.lastName(), email: Faker.internet.email()};
+            const user4 = {firstName: Faker.name.firstName(), lastName: Faker.name.lastName(), email: Faker.internet.email()};
+            const user5 = {firstName: Faker.name.firstName(), lastName: Faker.name.lastName(), email: Faker.internet.email()};
+            const userData = [user1, user2, user3, user4, user5];
+
+            return userDao.createBulk(userData)
+            .then((numRows) => {
+                Should.exist(numRows);
+                numRows.should.eql(5);
+                const checkRowPromise1 = userDao.getAll({}, { offset: 3, limit: 2 })
+                .then(users => {
+                    Should.exist(users);
+                    users.should.be.an.Array();
+                    users.length.should.eql(2);
+
+                    users[0].should.be.an.instanceOf(User);
+                    users[0].firstName.should.eql(user4.firstName);
+                    users[0].lastName.should.eql(user4.lastName);
+                    users[0].email.should.eql(user4.email);
+
+                    users[1].should.be.an.instanceOf(User);
+                    users[1].firstName.should.eql(user5.firstName);
+                    users[1].lastName.should.eql(user5.lastName);
+                    users[1].email.should.eql(user5.email);
+                });
+
+                return Promise.all([checkRowPromise1]);
+            });
+        });
+    });
+
+    describe('getAllAndCount', function() {
+        beforeEach(databaseSetup);
+
+        it('Should return two users and the count', function() {
+            return userDao.createBulk([
+                {firstName: 'John', lastName: 'Doe', email: 'john.doe@gmail.com'},
+                {firstName: 'Jane', lastName: 'Doe', email: 'jane.doe@gmail.com'}
+            ])
+            .then((numRows) => {
+                Should.exist(numRows);
+                numRows.should.eql(2);
+                const checkRowPromise1 = userDao.getAllAndCount({lastName: 'Doe'})
+                .then(result => {
+                    const count = result.count;
+                    Should.exist(count);
+                    count.should.eql(2);
+
+                    const users = result.results;
+                    Should.exist(users);
+                    users.should.be.an.Array();
+                    users.length.should.eql(2);
+
+                    users[0].should.be.an.instanceOf(User);
+                    users[0].firstName.should.eql('John');
+                    users[0].lastName.should.eql('Doe');
+                    users[0].email.should.eql('john.doe@gmail.com');
+
+                    users[1].should.be.an.instanceOf(User);
+                    users[1].firstName.should.eql('Jane');
+                    users[1].lastName.should.eql('Doe');
+                    users[1].email.should.eql('jane.doe@gmail.com');
+                });
+
+                return Promise.all([checkRowPromise1]);
+            });
+        });
+
+        it('Should return limit to 2 of 5 users and the count', function() {
+            const user1 = {firstName: Faker.name.firstName(), lastName: Faker.name.lastName(), email: Faker.internet.email()};
+            const user2 = {firstName: Faker.name.firstName(), lastName: Faker.name.lastName(), email: Faker.internet.email()};
+            const user3 = {firstName: Faker.name.firstName(), lastName: Faker.name.lastName(), email: Faker.internet.email()};
+            const user4 = {firstName: Faker.name.firstName(), lastName: Faker.name.lastName(), email: Faker.internet.email()};
+            const user5 = {firstName: Faker.name.firstName(), lastName: Faker.name.lastName(), email: Faker.internet.email()};
+            const userData = [user1, user2, user3, user4, user5];
+
+            return userDao.createBulk(userData)
+            .then((numRows) => {
+                Should.exist(numRows);
+                numRows.should.eql(5);
+                const checkRowPromise1 = userDao.getAllAndCount({}, { limit: 2 })
+                .then(result => {
+                    const count = result.count;
+                    Should.exist(count);
+                    count.should.eql(5);
+
+                    const users = result.results;
+                    Should.exist(users);
+                    users.should.be.an.Array();
+                    users.length.should.eql(2);
+
+                    users[0].should.be.an.instanceOf(User);
+                    users[0].firstName.should.eql(user1.firstName);
+                    users[0].lastName.should.eql(user1.lastName);
+                    users[0].email.should.eql(user1.email);
+
+                    users[1].should.be.an.instanceOf(User);
+                    users[1].firstName.should.eql(user2.firstName);
+                    users[1].lastName.should.eql(user2.lastName);
+                    users[1].email.should.eql(user2.email);
+                });
+
+                return Promise.all([checkRowPromise1]);
+            });
+        });
+
+        it('Should return users in descending order and the count', function() {
+            const user1 = {firstName: Faker.name.firstName(), lastName: Faker.name.lastName(), email: Faker.internet.email()};
+            const user2 = {firstName: Faker.name.firstName(), lastName: Faker.name.lastName(), email: Faker.internet.email()};
+            const user3 = {firstName: Faker.name.firstName(), lastName: Faker.name.lastName(), email: Faker.internet.email()};
+            const user4 = {firstName: Faker.name.firstName(), lastName: Faker.name.lastName(), email: Faker.internet.email()};
+            const user5 = {firstName: Faker.name.firstName(), lastName: Faker.name.lastName(), email: Faker.internet.email()};
+            const userData = [user1, user2, user3, user4, user5].sort(function (a, b) {
+                if (a.email > b.email) return -1;
+                else if (a.email < b.email) return 1;
+                return 0
+            });
+
+            return userDao.createBulk(userData)
+            .then((numRows) => {
+                Should.exist(numRows);
+                numRows.should.eql(5);
+                const checkRowPromise1 = userDao.getAllAndCount({}, { sort: { email: 'DESC', lastName: 'DESC' }})
+                .then(result => {
+                    const count = result.count;
+                    Should.exist(count);
+                    count.should.eql(5);
+
+                    const users = result.results;
+                    Should.exist(users);
+                    users.should.be.an.Array();
+                    users.length.should.eql(5);
+
+                    users[0].should.be.an.instanceOf(User);
+                    users[0].firstName.should.eql(userData[0].firstName);
+                    users[0].lastName.should.eql(userData[0].lastName);
+                    users[0].email.should.eql(userData[0].email);
+
+                    users[1].should.be.an.instanceOf(User);
+                    users[1].firstName.should.eql(userData[1].firstName);
+                    users[1].lastName.should.eql(userData[1].lastName);
+                    users[1].email.should.eql(userData[1].email);
+
+                    users[2].should.be.an.instanceOf(User);
+                    users[2].firstName.should.eql(userData[2].firstName);
+                    users[2].lastName.should.eql(userData[2].lastName);
+                    users[2].email.should.eql(userData[2].email);
+
+                    users[3].should.be.an.instanceOf(User);
+                    users[3].firstName.should.eql(userData[3].firstName);
+                    users[3].lastName.should.eql(userData[3].lastName);
+                    users[3].email.should.eql(userData[3].email);
+
+                    users[4].should.be.an.instanceOf(User);
+                    users[4].firstName.should.eql(userData[4].firstName);
+                    users[4].lastName.should.eql(userData[4].lastName);
+                    users[4].email.should.eql(userData[4].email);
+                });
+
+                return Promise.all([checkRowPromise1]);
+            });
+        });
+
+        it('Should return the last 2 of 5 users and the count', function() {
+            const user1 = {firstName: Faker.name.firstName(), lastName: Faker.name.lastName(), email: Faker.internet.email()};
+            const user2 = {firstName: Faker.name.firstName(), lastName: Faker.name.lastName(), email: Faker.internet.email()};
+            const user3 = {firstName: Faker.name.firstName(), lastName: Faker.name.lastName(), email: Faker.internet.email()};
+            const user4 = {firstName: Faker.name.firstName(), lastName: Faker.name.lastName(), email: Faker.internet.email()};
+            const user5 = {firstName: Faker.name.firstName(), lastName: Faker.name.lastName(), email: Faker.internet.email()};
+            const userData = [user1, user2, user3, user4, user5];
+
+            return userDao.createBulk(userData)
+            .then((numRows) => {
+                Should.exist(numRows);
+                numRows.should.eql(5);
+                const checkRowPromise1 = userDao.getAllAndCount({}, { offset: 3, limit: 2 })
+                .then(result => {
+                    const count = result.count;
+                    Should.exist(count
+                    );
+                    count.should.eql(5);
+
+                    const users = result.results;
+                    Should.exist(users);
+                    users.should.be.an.Array();
+                    users.length.should.eql(2);
+
+                    users[0].should.be.an.instanceOf(User);
+                    users[0].firstName.should.eql(user4.firstName);
+                    users[0].lastName.should.eql(user4.lastName);
+                    users[0].email.should.eql(user4.email);
+
+                    users[1].should.be.an.instanceOf(User);
+                    users[1].firstName.should.eql(user5.firstName);
+                    users[1].lastName.should.eql(user5.lastName);
+                    users[1].email.should.eql(user5.email);
+                });
+
+                return Promise.all([checkRowPromise1]);
+            });
         });
     });
 

@@ -4,6 +4,7 @@
       "host": "localhost",
       "database": "hapiestmysql",
       "user": "hapiestmysql",
+      "password": "mysql@9028",
       "password": "hapiestmysql",
       "connectionLimit": 100,
       "multipleStatements": true
