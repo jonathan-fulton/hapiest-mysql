@@ -128,6 +128,27 @@ describe('MysqlDaoQueryHelper', function() {
             sql.should.eql("SELECT * FROM users WHERE (id IN (1,2,5,10))");
         });
 
+        it('Should generate a SELECT statement with order by', function() {
+            const sql = mysqlDaoQueryHelper.getAll({}, { sort: { firstName: 'ASC', lastName: 'DESC' } });
+            Should.exist(sql);
+
+            sql.should.eql("SELECT * FROM users ORDER BY first_name ASC, last_name DESC");
+        });
+
+        it('Should generate a SELECT statement with limit', function() {
+            const sql = mysqlDaoQueryHelper.getAll({}, { limit: 2 });
+            Should.exist(sql);
+
+            sql.should.eql("SELECT * FROM users LIMIT 2");
+        });
+
+        it('Should generate a SELECT statement with offset and limit', function() {
+            const sql = mysqlDaoQueryHelper.getAll({}, { offset: 1, limit: 2 });
+            Should.exist(sql);
+
+            sql.should.eql("SELECT * FROM users LIMIT 2 OFFSET 1");
+        });
+
     });
 
     describe('updateOne', function() {

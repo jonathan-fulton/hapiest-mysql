@@ -532,9 +532,8 @@ describe('MysqlDao', function() {
             .then((numRows) => {
                 Should.exist(numRows);
                 numRows.should.eql(5);
-                const checkRowPromise1 = userDao.getAll({}, { sortBy: 'email', sortDir: 'DESC' })
+                const checkRowPromise1 = userDao.getAll({}, { sort: { email: 'DESC', lastName: 'DESC' }})
                 .then(users => {
-                    console.log('users', users);
                     Should.exist(users);
                     users.should.be.an.Array();
                     users.length.should.eql(5);
