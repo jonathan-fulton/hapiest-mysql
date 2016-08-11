@@ -151,6 +151,29 @@ describe('MysqlDaoQueryHelper', function() {
 
     });
 
+    describe('getCount', function() {
+        it('Should generate a SELECT count(*) statement', function() {
+            const sql = mysqlDaoQueryHelper.getCount({lastName: 'Doe'});
+            Should.exist(sql);
+
+            sql.should.eql("SELECT COUNT(*) AS \"count\" FROM users WHERE (last_name = 'Doe')");
+        });
+
+        it('Should generate a SELECT count(*) statement with limit', function() {
+            const sql = mysqlDaoQueryHelper.getCount({lastName: 'Doe'}, { limit: 2 });
+            Should.exist(sql);
+
+            sql.should.eql("SELECT COUNT(*) AS \"count\" FROM users WHERE (last_name = 'Doe')");
+        });
+
+        it('Should generate a SELECT count(*) statement with limit and offset', function() {
+            const sql = mysqlDaoQueryHelper.getCount({lastName: 'Doe'}, { offset: 1, limit: 2 });
+            Should.exist(sql);
+
+            sql.should.eql("SELECT COUNT(*) AS \"count\" FROM users WHERE (last_name = 'Doe')");
+        });
+    });
+
     describe('updateOne', function() {
 
         it('Should generate an UPDATE statement for one row', function() {
