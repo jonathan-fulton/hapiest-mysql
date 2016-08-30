@@ -2,16 +2,16 @@
   "database": {
     "write": {
       "host": "localhost",
-      "database": "optimage",
-      "user": "optimagedev",
-      "password": "=7QM^!4ynHebT7s7",
+      "database": "hapiestmysql",
+      "user": "hapiestmysql",
+      "password": "hapiestmysql",
       "connectionLimit": 10
     },
     "read": {
       "host": "localhost",
-      "database": "optimage",
-      "user": "optimagedev",
-      "password": "=7QM^!4ynHebT7s7",
+      "database": "hapiestmysql",
+      "user": "hapiestmysql",
+      "password": "hapiestmysql",
       "connectionLimit": 10
     }
   }
