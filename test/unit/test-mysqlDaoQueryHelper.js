@@ -7,7 +7,7 @@ const VO = require('hapiest-vo');
 
 const MysqlDaoQueryHelper = require('../../lib/mysqlDaoQueryHelper');
 
-const cleanFunction = Mysql.escape;
+const cleanFunction = value => Mysql.escape(value, false, 'GMT');
 const mysqlDaoQueryHelper = new MysqlDaoQueryHelper('users', cleanFunction);
 
 class UserCreateArgs extends VO {
