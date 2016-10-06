@@ -387,5 +387,42 @@ describe('MysqlService', function() {
         });
     });
 
+    describe('ping', function() {
 
+        it('Should ping a valid connection successfully', function() {
+            return mysqlService.ping();
+        });
+
+        it('Should error on invalid write connection', function() {
+            const invalidConfig = {
+                host: 'localhost',
+                database: 'invalid',
+                user: 'hapiestmysql',
+                password: 'hapiestmysql',
+                connectionLimit: 1
+            };
+            const invalidMysqlService = MysqlServiceFactory.createFromObjWithOnePool(invalidConfig, logger);
+            return invalidMysqlService.ping()
+                .catch(err => {
+                    Should.exist(err);
+                    (err.code).should.equal('ER_DBACCESS_DENIED_ERROR')
+                })
+        });
+
+        it('Should error on invalid read connection', function() {
+            const invalidReadConnectionConfig = {
+                host: ['localhost','doesnotexist'],
+                database: 'hapiestmysql',
+                user: 'hapiestmysql',
+                password: 'hapiestmysql',
+                connectionLimit: 1
+            };
+            const invalidMysqlService = MysqlServiceFactory.createFromObj(writeConnectionConfig, invalidReadConnectionConfig, logger);
+            return invalidMysqlService.ping()
+                .catch(err => {
+                    Should.exist(err);
+                    (err.code).should.equal('ENOTFOUND')
+                });
+        });
+    });
 });
