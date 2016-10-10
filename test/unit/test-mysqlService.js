@@ -425,4 +425,15 @@ describe('MysqlService', function() {
                 });
         });
     });
+
+    describe('endPools', function() {
+        it('Should end all connection pools', function() {
+            return mysqlService.endPools()
+                .then(() => {
+                    mysqlService._writePool._closed.should.be.true;
+                    mysqlService._readPools.forEach(pool => pool._closed.should.be.true);
+                });
+        })
+    });
+
 });
