@@ -7,7 +7,7 @@ const VO = require('hapiest-vo');
 
 const MysqlDaoQueryHelper = require('../../lib/mysqlDaoQueryHelper');
 
-const cleanFunction = Mysql.escape;
+const cleanFunction = value => Mysql.escape(value, false, '+00:00');
 const mysqlDaoQueryHelper = new MysqlDaoQueryHelper('users', cleanFunction);
 
 class UserCreateArgs extends VO {
@@ -26,10 +26,10 @@ describe('MysqlDaoQueryHelper', function() {
     describe('create', function() {
 
         it('Should generate an INSERT statement for a single entry in users table', function() {
-            const sql = mysqlDaoQueryHelper.create({firstName: 'firstName', lastName: 'lastName', password: 'boom!'});
+            const sql = mysqlDaoQueryHelper.create({firstName: 'firstName', lastName: 'lastName', password: 'boom!', dateAdded: new Date('1990-01-05T13:30:00Z')});
             Should.exist(sql);
 
-            sql.should.eql(`INSERT INTO users (first_name, last_name, password) VALUES ('firstName', 'lastName', 'boom!')`);
+            sql.should.eql(`INSERT INTO users (first_name, last_name, password, date_added) VALUES ('firstName', 'lastName', 'boom!', '1990-01-05 13:30:00.000')`);
         });
 
         it('Should generate an INSERT statement for a single entry in users table from a VO', function() {
@@ -202,10 +202,10 @@ describe('MysqlDaoQueryHelper', function() {
     describe('update', function() {
 
         it('Should generate an UPDATE statement that has no LIMIT clause', function() {
-            const sql = mysqlDaoQueryHelper.update({id: 1}, {email: 'john.doe@gmail.com', firstName: 'john'});
+            const sql = mysqlDaoQueryHelper.update({id: 1}, {email: 'john.doe@gmail.com', firstName: 'john', dateUpdated: new Date('2016-09-27T11:30:00Z')});
             Should.exist(sql);
 
-            sql.should.eql("UPDATE users SET email = 'john.doe@gmail.com', first_name = 'john' WHERE (id = 1)");
+            sql.should.eql("UPDATE users SET email = 'john.doe@gmail.com', first_name = 'john', date_updated = '2016-09-27 11:30:00.000' WHERE (id = 1)");
         })
 
     });
