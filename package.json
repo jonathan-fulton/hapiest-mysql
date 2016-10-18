@@ -1,6 +1,6 @@
 {
   "name": "hapiest-mysql",
-  "version": "0.0.30",
+  "version": "0.0.31",
   "description": "A wrapper around mysql that provides a very descriptive way of running queries.",
   "main": "index.js",
   "scripts": {
@@ -22,24 +22,24 @@
   },
   "homepage": "https://github.com/jonathan-fulton/hapiest-mysql#readme",
   "dependencies": {
-    "bluebird": "^3.3.5",
+    "bluebird": "3.3.5",
     "chance": "1.0.3",
-    "config": "^1.20.1",
-    "hapiest-vo": "^0.0.4",
-    "joi": "^8.1.0",
+    "config": "1.20.1",
+    "hapiest-vo": "0.0.4",
+    "joi": "8.1.0",
     "lodash": "4.13.1",
-    "mysql": "^2.10.2",
-    "squel": "^5.2.1"
+    "mysql": "2.10.2",
+    "squel": "5.2.1"
   },
   "devDependencies": {
-    "async": "^2.0.0-rc.4",
-    "config-uncached": "^1.0.2",
-    "faker": "^3.1.0",
-    "hapiest-logger": "^0.0.4",
-    "intercept-stdout": "^0.1.2",
+    "async": "2.0.0-rc.4",
+    "config-uncached": "1.0.2",
+    "faker": "3.1.0",
+    "hapiest-logger": "0.0.4",
+    "intercept-stdout": "0.1.2",
     "mocha": "3.0.2",
-    "path": "^0.12.7",
-    "should": "^8.3.1",
+    "path": "0.12.7",
+    "should": "8.3.1",
     "sinon": "1.17.4"
   }
 }
