@@ -422,7 +422,7 @@ describe('MysqlDaoQueryHelper', function() {
             output.non_null_field.should.eql("'IS NOT NULL'");
         });
 
-        it('Convert undefined value to null', function() {
+        it('Ignore undefined values', function() {
             const someObj = {firstName: 'John', lastName: 'Doe'};
             const output = mysqlDaoQueryHelper._cleanAndMapValues({
                 firstName: someObj.firstName,
@@ -430,10 +430,10 @@ describe('MysqlDaoQueryHelper', function() {
                 password: someObj.password
             });
             Should.exist(output);
-            output.should.have.properties(['first_name','last_name','password']);
+            output.should.have.properties(['first_name','last_name']);
+            output.should.not.have.properties(['password']);
             output.first_name.should.eql("'John'");
             output.last_name.should.eql("'Doe'");
-            output.password.should.eql("NULL");
         });
 
     });
@@ -460,7 +460,7 @@ describe('MysqlDaoQueryHelper', function() {
             sqlString.should.eql("SELECT * FROM users WHERE (first_name = 'John') AND (last_name IS NULL)");
         });
 
-        it('Should generate good WHERE clause when input contains undefined value (assumes it means NULL)', function() {
+        it('Should generate good WHERE clause when input contains undefined value (ignores the key)', function() {
             const sqlObj = Squel.select().from('users');
 
             const someObj = {firstName: 'John'};
@@ -468,7 +468,7 @@ describe('MysqlDaoQueryHelper', function() {
 
             const sqlString = sqlObj.toString();
 
-            sqlString.should.eql("SELECT * FROM users WHERE (first_name = 'John') AND (last_name IS NULL)");
+            sqlString.should.eql("SELECT * FROM users WHERE (first_name = 'John')");
         });
 
         it('Should generate good WHERE clause when input contains special functions', function() {
