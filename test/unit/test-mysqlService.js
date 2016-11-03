@@ -5,6 +5,7 @@
 const Should = require('should');
 const Promise = require('bluebird');
 const Sinon = require('sinon');
+const Moment = require('moment');
 const interceptStdout = require('intercept-stdout');
 
 const MysqlServiceFactory = require('../../lib/mysqlServiceFactory');
@@ -434,6 +435,31 @@ describe('MysqlService', function() {
                     mysqlService._readPools.forEach(pool => pool._closed.should.be.true);
                 });
         })
+    });
+
+    describe('_getDateFromDateString', function() {
+
+        it('Should correctly parse date from LA timezone', function() {
+            const mysqlServiceWithTz = MysqlServiceFactory.createFromObj(writeConnectionConfig, readConnectionConfig, logger, {dbTimezone: 'America/Los_Angeles'});
+            const value = mysqlServiceWithTz._getDateFromDateString('2016-10-10 00:00:00');
+            const expectedValue = Moment.utc('2016-10-10 07:00:00');
+            Moment(value).isSame(expectedValue).should.be.True();
+        });
+
+        it('Should correctly parse date from UTC timezone', function() {
+            const mysqlServiceWithTz = MysqlServiceFactory.createFromObj(writeConnectionConfig, readConnectionConfig, logger, {dbTimezone: 'UTC'});
+            const value = mysqlServiceWithTz._getDateFromDateString('2016-10-10 00:00:00');
+            const expectedValue = Moment.utc('2016-10-10 00:00:00');
+            Moment(value).isSame(expectedValue).should.be.True();
+        });
+
+        it('Should correctly parse date from Indian/Christmas timezone', function() {
+            const mysqlServiceWithTz = MysqlServiceFactory.createFromObj(writeConnectionConfig, readConnectionConfig, logger, {dbTimezone: 'Indian/Christmas'});
+            const value = mysqlServiceWithTz._getDateFromDateString('2016-10-10 00:00:00');
+            const expectedValue = Moment.utc('2016-10-09 17:00:00');
+            Moment(value).isSame(expectedValue).should.be.True();
+        });
+
     });
 
 });
