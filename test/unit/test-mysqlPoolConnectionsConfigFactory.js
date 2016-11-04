@@ -39,6 +39,7 @@ describe('MysqlPoolConnectionsConfigFactory', function() {
             writeConfig.connectionLimit.should.eql(100);
             Should.exist(writeConfig.multipleStatements);
             writeConfig.multipleStatements.should.be.true;
+            writeConfig.timezone.should.eql('utc');
         });
 
     });

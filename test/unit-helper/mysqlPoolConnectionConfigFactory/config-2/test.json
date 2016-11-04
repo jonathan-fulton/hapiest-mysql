@@ -7,7 +7,8 @@
       "user": "user",
       "password": "badpassword",
       "connectionLimit": 100,
-      "multipleStatements": true
+      "multipleStatements": true,
+      "timezone": "utc"
     }
   }
 }
