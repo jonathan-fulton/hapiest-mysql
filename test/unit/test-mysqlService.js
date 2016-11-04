@@ -4,6 +4,7 @@
 
 const Should = require('should');
 const Promise = require('bluebird');
+const Moment = require('moment');
 const Sinon = require('sinon');
 const interceptStdout = require('intercept-stdout');
 
@@ -26,18 +27,20 @@ const writeConnectionConfig = {
     database: 'hapiestmysql',
     user: 'hapiestmysql',
     password: 'hapiestmysql',
-    connectionLimit: 1
+    connectionLimit: 1,
+    timezone: 'utc'
 };
 const readConnectionConfig = {
     host: ['localhost','localhost'],
     database: 'hapiestmysql',
     user: 'hapiestmysql',
     password: 'hapiestmysql',
-    connectionLimit: 1
+    connectionLimit: 1,
+    timezone: 'utc'
 };
-const mysqlService = MysqlServiceFactory.createFromObj(writeConnectionConfig, readConnectionConfig, logger);
+let mysqlService;
 
-function databaseSetup(done) {
+function databaseSetup() {
 
     const queries = [
         'DROP TABLE IF EXISTS __testing',
@@ -58,17 +61,17 @@ function databaseSetup(done) {
                     (1,'one', NOW(), NOW()),
                     (2, 'two', NOW(), NOW()),
                     (3, 'three', NOW(), NOW())
-            `
+            `,
+        `INSERT INTO __testing (colInt, colVarchar, date_created_datetime, date_created_timestamp) VALUES (4, 'four', '2016-10-10 00:00:00', '2016-10-10 12:00:00')`
     ];
 
-    mysqlService.executeQueries(queries)
-        .then(() => done(), (err) => done(err));
+    mysqlService = MysqlServiceFactory.createFromObj(writeConnectionConfig, readConnectionConfig, logger);
+    return mysqlService.executeQueries(queries);
 }
 
-function databaseTeardown(done) {
+function databaseTeardown() {
     const queries = ['DROP TABLE IF EXISTS __testing'];
-    mysqlService.executeQueries(queries)
-        .then(() => done(), (err) => done(err));
+    return mysqlService.executeQueries(queries);
 }
 
 /**********************************************************
@@ -131,7 +134,68 @@ describe('MysqlService', function() {
                     querySpy0.callCount.should.be.greaterThan(0);
                     querySpy1.callCount.should.be.greaterThan(0);
                 });
-            })
+            });
+
+            describe('Date values with timezone config', function() {
+
+                it('Should properly pull dates using UTC timezone provided in DB config', function() {
+                    return mysqlService.selectOne("SELECT date_created_datetime, date_created_timestamp FROM __testing WHERE colInt = 4")
+                        .then(row => {
+                            row.date_created_datetime.should.be.an.instanceOf(Date);
+                            row.date_created_timestamp.should.be.an.instanceOf(Date);
+
+                            const expectedDateCreatedDatetime = Moment.utc('2016-10-10 00:00:00');
+                            Moment(row.date_created_datetime).isSame(expectedDateCreatedDatetime).should.be.True();
+
+                            const expectedDateCreatedTimestamp = Moment.utc('2016-10-10 12:00:00');
+                            Moment(row.date_created_timestamp).isSame(expectedDateCreatedTimestamp).should.be.True();
+                        })
+                });
+
+                it('Should properly pull dates using local timezone when a timezone is not specified in config', function() {
+                    const writeConfig = JSON.parse(JSON.stringify(writeConnectionConfig));
+                    const readConfig = JSON.parse(JSON.stringify(readConnectionConfig));
+                    delete writeConfig.timezone;
+                    delete readConfig.timezone;
+
+                    const mysqlServiceTz = MysqlServiceFactory.createFromObj(writeConfig, readConfig, logger);
+                    return mysqlServiceTz.selectOne("SELECT date_created_datetime, date_created_timestamp FROM __testing WHERE colInt = 4")
+                    .then(row => {
+                        row.date_created_datetime.should.be.an.instanceOf(Date);
+                        row.date_created_timestamp.should.be.an.instanceOf(Date);
+                        
+                        const expectedDateCreatedDatetime = Moment(new Date('2016-10-10 00:00:00'));
+                        Moment(row.date_created_datetime).isSame(expectedDateCreatedDatetime).should.be.True();
+
+                        const expectedDateCreatedTimestamp = Moment(new Date('2016-10-10 12:00:00'));
+                        Moment(row.date_created_timestamp).isSame(expectedDateCreatedTimestamp).should.be.True();
+                    })
+                });
+
+                it('Should properly pull dates using America/Los_Angeles timezone when a timezone is not specified in config', function() {
+                    this.skip(); // Right now node-mysql does not support full IANA timezones
+
+                    const writeConfig = JSON.parse(JSON.stringify(writeConnectionConfig));
+                    const readConfig = JSON.parse(JSON.stringify(readConnectionConfig));
+                    writeConfig.timezone = 'America/Los_Angeles';
+                    readConfig.timezone = 'America/Los_Angeles';
+
+                    const mysqlServiceTz = MysqlServiceFactory.createFromObj(writeConfig, readConfig, logger);
+                    return mysqlServiceTz.selectOne("SELECT date_created_datetime, date_created_timestamp FROM __testing WHERE colInt = 4")
+                    .then(row => {
+                        row.date_created_datetime.should.be.an.instanceOf(Date);
+                        row.date_created_timestamp.should.be.an.instanceOf(Date);
+
+                        const expectedDateCreatedDatetime = Moment(new Date('2016-10-10 03:00:00'));
+                        Moment(row.date_created_datetime).isSame(expectedDateCreatedDatetime).should.be.True();
+
+                        const expectedDateCreatedTimestamp = Moment(new Date('2016-10-10 15:00:00'));
+                        Moment(row.date_created_timestamp).isSame(expectedDateCreatedTimestamp).should.be.True();
+                    })
+                });
+
+            });
+
         });
 
         // @TODO: figure out how to test read from master...need to set up separate databases perhaps?
@@ -241,7 +305,7 @@ describe('MysqlService', function() {
                         Should.exist(results);
                         results.should.be.instanceof(MysqlModificationResult);
                         results.affectedRows.should.eql(1);
-                        results.insertId.should.eql(4);
+                        results.insertId.should.eql(5);
                     })
                     .then(() => mysqlService.selectOne('SELECT colInt, colVarchar FROM __testing WHERE colInt = 10'))
                     .then((results) => { // Confirm the insert actually happened
@@ -256,15 +320,15 @@ describe('MysqlService', function() {
                         Should.exist(results);
                         results.should.be.instanceof(MysqlModificationResult);
                         results.affectedRows.should.eql(2);
-                        results.insertId.should.eql(4);
+                        results.insertId.should.eql(5);
                     })
                     .then(() => mysqlService.selectAll('SELECT id, colInt, colVarchar FROM __testing WHERE colInt IN (10,20)'))
                     .then((results) => {
                         Should.exist(results);
 
                         results.should.deepEqual([
-                            {id: 4, colInt: 10, colVarchar: 'ten'},
-                            {id: 5, colInt: 20, colVarchar: 'twenty'}
+                            {id: 5, colInt: 10, colVarchar: 'ten'},
+                            {id: 6, colInt: 20, colVarchar: 'twenty'}
                         ]);
                     });
             });
@@ -294,8 +358,8 @@ describe('MysqlService', function() {
                     .then((results) => {
                         Should.exist(results);
                         results.should.be.instanceof(MysqlModificationResult);
-                        results.affectedRows.should.eql(3);
-                        results.changedRows.should.eql(2);
+                        results.affectedRows.should.eql(4);
+                        results.changedRows.should.eql(3);
                     });
             });
 
@@ -323,7 +387,7 @@ describe('MysqlService', function() {
                     .then((results) => {
                         Should.exist(results);
                         results.should.be.instanceof(MysqlModificationResult);
-                        results.affectedRows.should.eql(2);
+                        results.affectedRows.should.eql(3);
                     });
             });
 
