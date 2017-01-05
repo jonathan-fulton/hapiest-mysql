@@ -178,6 +178,9 @@ describe('MysqlDaoQueryHelper', function() {
                 name: {
                     eq: 'Chas'
                 },
+                lastName: {
+                    ne: 'Fantastic'
+                },
                 id: {
                     gt: 2
                 },
@@ -188,7 +191,7 @@ describe('MysqlDaoQueryHelper', function() {
             });
             Should.exist(sql);
 
-            sql.should.eql("SELECT * FROM users WHERE (name = 'Chas') AND (id > 2) AND (date_added > '1990-01-05 13:30:00.000' AND date_added <= '1990-01-10 13:30:00.000')");
+            sql.should.eql("SELECT * FROM users WHERE (name = 'Chas') AND (last_name != 'Fantastic') AND (id > 2) AND (date_added > '1990-01-05 13:30:00.000' AND date_added <= '1990-01-10 13:30:00.000')");
         });
 
     });
