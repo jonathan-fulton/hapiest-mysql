@@ -149,6 +149,45 @@ describe('MysqlDaoQueryHelper', function() {
             sql.should.eql("SELECT * FROM users LIMIT 2 OFFSET 1");
         });
 
+        it('Should generate a SELECT statement with a query object and gt/lt', function() {
+            const sql = mysqlDaoQueryHelper.getAll({
+                dateAdded: {
+                    gt: new Date('1990-01-05T13:30:00Z'),
+                    lt: new Date('1990-01-10T13:30:00Z')
+                }
+            });
+            Should.exist(sql);
+
+            sql.should.eql("SELECT * FROM users WHERE (date_added > '1990-01-05 13:30:00.000' AND date_added < '1990-01-10 13:30:00.000')");
+        });
+
+        it('Should generate a SELECT statement with a query object and gte/lte', function() {
+            const sql = mysqlDaoQueryHelper.getAll({
+                id: {
+                    gte: 5,
+                    lte: 10
+                }
+            });
+            Should.exist(sql);
+
+            sql.should.eql("SELECT * FROM users WHERE (id >= 5 AND id <= 10)");
+        });
+
+        it('Should generate a SELECT statement with multiple query objects', function() {
+            const sql = mysqlDaoQueryHelper.getAll({
+                name: {
+                    eq: 'Chas'
+                },
+                dateAdded: {
+                    gt: new Date('1990-01-05T13:30:00Z'),
+                    lte: new Date('1990-01-10T13:30:00Z')
+                }
+            });
+            Should.exist(sql);
+
+            sql.should.eql("SELECT * FROM users WHERE (name = 'Chas') AND (date_added > '1990-01-05 13:30:00.000' AND date_added <= '1990-01-10 13:30:00.000')");
+        });
+
     });
 
     describe('getCount', function() {
