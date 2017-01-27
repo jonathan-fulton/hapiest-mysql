@@ -292,6 +292,32 @@ describe('MysqlService', function() {
 
             });
         });
+
+        describe('stream results', function() {
+          const results = [];
+          it('It should be able to stream the results of a query', function(done) {
+            mysqlService.streamQuery('SELECT colInt, colVarchar FROM __testing WHERE colInt IN (2,3) ORDER BY id ASC')
+              .on('data', (result) => {
+                results.push(result);
+              }).on('end', () => {
+                results.should.be.an.array;
+                results.length.should.eql(2);
+
+                results[0].should.not.have.property('id');
+                results[0].should.have.property('colInt');
+                results[0].colInt.should.eql(2);
+                results[0].should.have.property('colVarchar');
+                results[0].colVarchar.should.eql('two');
+
+                results[1].should.not.have.property('id');
+                results[1].should.have.property('colInt');
+                results[1].colInt.should.eql(3);
+                results[1].should.have.property('colVarchar');
+                results[1].colVarchar.should.eql('three');
+                done();
+              });
+          })
+        })
     });
 
     describe('data modification functions', function() {
