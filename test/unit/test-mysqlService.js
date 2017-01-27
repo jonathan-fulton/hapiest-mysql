@@ -334,7 +334,6 @@ describe('MysqlService', function() {
                   done();
               });
           });
-      });
     });
 
     describe('data modification functions', function() {
@@ -541,6 +540,6 @@ describe('MysqlService', function() {
                     mysqlService._readPools.forEach(pool => pool._closed.should.be.true);
                 });
         })
-    });
+    })
 
-});
+})
