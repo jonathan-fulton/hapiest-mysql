@@ -961,6 +961,356 @@ describe('MysqlDao', function() {
         });
     });
 
+    describe('stream', function() {
+        beforeEach(databaseSetup);
+
+        it('Should stream two users', function(done) {
+
+            userDao.createBulk([
+                    {firstName: 'John', lastName: 'Doe', email: 'john.doe@gmail.com'},
+                    {firstName: 'Jane', lastName: 'Doe', email: 'jane.doe@gmail.com'}
+                ])
+                .then((numRows) => {
+                    Should.exist(numRows);
+                    numRows.should.eql(2);
+
+                    const users = [];
+                    userDao.stream({lastName: 'Doe'})
+                        .on('data', dbRow => users.push(dbRow))
+                        .on('end', () => {
+                            Should.exist(users);
+                            users.should.be.an.Array();
+                            users.length.should.eql(2);
+
+                            users[0].should.be.an.instanceOf(User);
+                            users[0].firstName.should.eql('John');
+                            users[0].lastName.should.eql('Doe');
+                            users[0].email.should.eql('john.doe@gmail.com');
+
+                            users[1].should.be.an.instanceOf(User);
+                            users[1].firstName.should.eql('Jane');
+                            users[1].lastName.should.eql('Doe');
+                            users[1].email.should.eql('jane.doe@gmail.com');
+
+                            done();
+                        });
+
+                });
+        });
+
+        it('Should stream limit to 2 of 5 users', function(done) {
+            const user1 = {firstName: Faker.name.firstName(), lastName: Faker.name.lastName(), email: Faker.internet.email()};
+            const user2 = {firstName: Faker.name.firstName(), lastName: Faker.name.lastName(), email: Faker.internet.email()};
+            const user3 = {firstName: Faker.name.firstName(), lastName: Faker.name.lastName(), email: Faker.internet.email()};
+            const user4 = {firstName: Faker.name.firstName(), lastName: Faker.name.lastName(), email: Faker.internet.email()};
+            const user5 = {firstName: Faker.name.firstName(), lastName: Faker.name.lastName(), email: Faker.internet.email()};
+            const userData = [user1, user2, user3, user4, user5];
+
+            userDao.createBulk(userData).then((numRows) => {
+                Should.exist(numRows);
+                numRows.should.eql(5);
+                const users = [];
+                userDao.stream({}, { limit: 2 })
+                    .on('data', dbRow => users.push(dbRow))
+                    .on('end', () => {
+                        Should.exist(users);
+                        users.should.be.an.Array();
+                        users.length.should.eql(2);
+
+                        users[0].should.be.an.instanceOf(User);
+                        users[0].firstName.should.eql(user1.firstName);
+                        users[0].lastName.should.eql(user1.lastName);
+                        users[0].email.should.eql(user1.email);
+
+                        users[1].should.be.an.instanceOf(User);
+                        users[1].firstName.should.eql(user2.firstName);
+                        users[1].lastName.should.eql(user2.lastName);
+                        users[1].email.should.eql(user2.email);
+
+                        done();
+                    });
+            });
+        });
+
+        it('Should stream users in descending order', function(done) {
+            const user1 = {firstName: Faker.name.firstName(), lastName: Faker.name.lastName(), email: Faker.internet.email()};
+            const user2 = {firstName: Faker.name.firstName(), lastName: Faker.name.lastName(), email: Faker.internet.email()};
+            const user3 = {firstName: Faker.name.firstName(), lastName: Faker.name.lastName(), email: Faker.internet.email()};
+            const user4 = {firstName: Faker.name.firstName(), lastName: Faker.name.lastName(), email: Faker.internet.email()};
+            const user5 = {firstName: Faker.name.firstName(), lastName: Faker.name.lastName(), email: Faker.internet.email()};
+            const userData = [user1, user2, user3, user4, user5].sort(function (a, b) {
+                if (a.email > b.email) return -1;
+                else if (a.email < b.email) return 1;
+                return 0
+            });
+
+            userDao.createBulk(userData).then((numRows) => {
+                Should.exist(numRows);
+                numRows.should.eql(5);
+                const users = [];
+                userDao.stream({}, { sort: { email: 'DESC', lastName: 'DESC' }})
+                    .on('data', dbRow => users.push(dbRow))
+                    .on('end', () => {
+                        Should.exist(users);
+                        users.should.be.an.Array();
+                        users.length.should.eql(5);
+
+                        users[0].should.be.an.instanceOf(User);
+                        users[0].firstName.should.eql(userData[0].firstName);
+                        users[0].lastName.should.eql(userData[0].lastName);
+                        users[0].email.should.eql(userData[0].email);
+
+                        users[1].should.be.an.instanceOf(User);
+                        users[1].firstName.should.eql(userData[1].firstName);
+                        users[1].lastName.should.eql(userData[1].lastName);
+                        users[1].email.should.eql(userData[1].email);
+
+                        users[2].should.be.an.instanceOf(User);
+                        users[2].firstName.should.eql(userData[2].firstName);
+                        users[2].lastName.should.eql(userData[2].lastName);
+                        users[2].email.should.eql(userData[2].email);
+
+                        users[3].should.be.an.instanceOf(User);
+                        users[3].firstName.should.eql(userData[3].firstName);
+                        users[3].lastName.should.eql(userData[3].lastName);
+                        users[3].email.should.eql(userData[3].email);
+
+                        users[4].should.be.an.instanceOf(User);
+                        users[4].firstName.should.eql(userData[4].firstName);
+                        users[4].lastName.should.eql(userData[4].lastName);
+                        users[4].email.should.eql(userData[4].email);
+
+                        done();
+                    });
+            });
+        });
+
+        it('Should stream the last 2 of 5 users', function(done) {
+            const user1 = {firstName: Faker.name.firstName(), lastName: Faker.name.lastName(), email: Faker.internet.email()};
+            const user2 = {firstName: Faker.name.firstName(), lastName: Faker.name.lastName(), email: Faker.internet.email()};
+            const user3 = {firstName: Faker.name.firstName(), lastName: Faker.name.lastName(), email: Faker.internet.email()};
+            const user4 = {firstName: Faker.name.firstName(), lastName: Faker.name.lastName(), email: Faker.internet.email()};
+            const user5 = {firstName: Faker.name.firstName(), lastName: Faker.name.lastName(), email: Faker.internet.email()};
+            const userData = [user1, user2, user3, user4, user5];
+
+            userDao.createBulk(userData).then((numRows) => {
+                Should.exist(numRows);
+                numRows.should.eql(5);
+                const users = [];
+                userDao.stream({}, { offset: 3, limit: 2 })
+                  .on('data', dbRow => users.push(dbRow))
+                  .on('end', () => {
+                      Should.exist(users);
+                      users.should.be.an.Array();
+                      users.length.should.eql(2);
+
+                      users[0].should.be.an.instanceOf(User);
+                      users[0].firstName.should.eql(user4.firstName);
+                      users[0].lastName.should.eql(user4.lastName);
+                      users[0].email.should.eql(user4.email);
+
+                      users[1].should.be.an.instanceOf(User);
+                      users[1].firstName.should.eql(user5.firstName);
+                      users[1].lastName.should.eql(user5.lastName);
+                      users[1].email.should.eql(user5.email);
+
+                      done();
+                    });
+            });
+        });
+    });
+
+    describe('streamFromMaster', function() {
+        beforeEach(databaseSetup);
+        afterEach(() => {
+            if (userDao._mysqlService.streamQueryFromMaster.restore) {
+                userDao._mysqlService.streamQueryFromMaster.restore();
+            }
+        });
+
+        it('Should stream two users', function(done) {
+            const streamFromMasterSpy = Sinon.spy(userDao._mysqlService, 'streamQueryFromMaster');
+            userDao.createBulk([
+                {firstName: 'John', lastName: 'Doe', email: 'john.doe@gmail.com'},
+                {firstName: 'Jane', lastName: 'Doe', email: 'jane.doe@gmail.com'}
+            ]).then((numRows) => {
+                Should.exist(numRows);
+                numRows.should.eql(2);
+                const users = [];
+                userDao.streamFromMaster({lastName: 'Doe'})
+                    .on('data', dbRow => users.push(dbRow))
+                    .on('end', () => {
+                        Should.exist(users);
+                        users.should.be.an.Array();
+                        users.length.should.eql(2);
+
+                        users[0].should.be.an.instanceOf(User);
+                        users[0].firstName.should.eql('John');
+                        users[0].lastName.should.eql('Doe');
+                        users[0].email.should.eql('john.doe@gmail.com');
+
+                        users[1].should.be.an.instanceOf(User);
+                        users[1].firstName.should.eql('Jane');
+                        users[1].lastName.should.eql('Doe');
+                        users[1].email.should.eql('jane.doe@gmail.com');
+
+                        streamFromMasterSpy.calledOnce.should.be.True();
+
+                        done();
+                    });
+            });
+        });
+    });
+
+    describe('streamFromSql', function() {
+        beforeEach(databaseSetup);
+
+        it('Should stream two rows with only first_name populated', function(done) {
+            userDao.createBulk([
+                {firstName: 'John', lastName: 'Doe', email: 'john.doe@gmail.com'},
+                {firstName: 'Jane', lastName: 'Doe', email: 'jane.doe@gmail.com'}
+            ]).then((numRows) => {
+                Should.exist(numRows);
+                numRows.should.eql(2);
+                const sql = "SELECT first_name FROM users WHERE last_name='Doe'";
+                const dbRows = [];
+                userDao.streamFromSql(sql)
+                    .on('data', dbRow => dbRows.push(dbRow))
+                    .on('end', () => {
+                        Should.exist(dbRows);
+                        dbRows.should.be.an.Array();
+                        dbRows.length.should.eql(2);
+
+                        dbRows[0].firstName.should.eql('John');
+                        dbRows[1].firstName.should.eql('Jane');
+
+                        Should.not.exist(dbRows[0].email);
+                        Should.not.exist(dbRows[0].lastName);
+                        Should.not.exist(dbRows[1].email);
+                        Should.not.exist(dbRows[1].lastName);
+
+                        done();
+                    });
+            });
+        });
+    });
+
+    describe('streamFromSqlFromMaster', function() {
+        beforeEach(databaseSetup);
+        afterEach(() => {
+            if (userDao._mysqlService.streamQueryFromMaster.restore) {
+                userDao._mysqlService.streamQueryFromMaster.restore();
+            }
+        });
+
+        it('Should stream two rows with only first_name populated', function(done) {
+            const streamFromMasterSpy = Sinon.spy(userDao._mysqlService, 'streamQueryFromMaster');
+            userDao.createBulk([
+                {firstName: 'John', lastName: 'Doe', email: 'john.doe@gmail.com'},
+                {firstName: 'Jane', lastName: 'Doe', email: 'jane.doe@gmail.com'}
+            ]).then((numRows) => {
+                Should.exist(numRows);
+                numRows.should.eql(2);
+                const sql = "SELECT first_name FROM users WHERE last_name='Doe'";
+                const dbRows = [];
+                userDao.streamFromSqlFromMaster(sql)
+                    .on('data', dbRow => dbRows.push(dbRow))
+                    .on('end', () => {
+                        Should.exist(dbRows);
+                        dbRows.should.be.an.Array();
+                        dbRows.length.should.eql(2);
+
+                        dbRows[0].firstName.should.eql('John');
+                        dbRows[1].firstName.should.eql('Jane');
+
+                        Should.not.exist(dbRows[0].email);
+                        Should.not.exist(dbRows[0].lastName);
+                        Should.not.exist(dbRows[1].email);
+                        Should.not.exist(dbRows[1].lastName);
+
+                        streamFromMasterSpy.calledOnce.should.be.True();
+
+                        done();
+                    });
+            });
+        });
+    });
+
+    describe('streamFromSqlRaw', function() {
+        beforeEach(databaseSetup);
+
+        it('Should stream two rows with only first_name populated', function(done) {
+            userDao.createBulk([
+                    {firstName: 'John', lastName: 'Doe', email: 'john.doe@gmail.com'},
+                    {firstName: 'Jane', lastName: 'Doe', email: 'jane.doe@gmail.com'}
+            ]).then((numRows) => {
+                const sql = "SELECT first_name FROM users WHERE last_name='Doe'";
+                const dbRows = [];
+                userDao.streamFromSqlRaw(sql)
+                    .on('data', dbRow => dbRows.push(dbRow))
+                    .on('end', () => {
+                        Should.exist(dbRows);
+                        dbRows.should.be.an.Array();
+                        dbRows.length.should.eql(2);
+
+                        dbRows[0].first_name.should.eql('John');
+                        dbRows[1].first_name.should.eql('Jane');
+
+                        Should.not.exist(dbRows[0].email);
+                        Should.not.exist(dbRows[0].firstName);
+                        Should.not.exist(dbRows[0].lastName);
+                        Should.not.exist(dbRows[1].email);
+                        Should.not.exist(dbRows[1].firstName);
+                        Should.not.exist(dbRows[1].lastName);
+
+                        done();
+                    });
+            });
+        });
+    });
+
+    describe('streamFromSqlFromMasterRaw', function() {
+        beforeEach(databaseSetup);
+        afterEach(() => {
+            if (userDao._mysqlService.streamQueryFromMaster.restore) {
+                userDao._mysqlService.streamQueryFromMaster.restore();
+            }
+        });
+
+        it('Should stream two rows with only first_name populated', function(done) {
+            const streamFromMasterSpy = Sinon.spy(userDao._mysqlService, 'streamQueryFromMaster');
+            userDao.createBulk([
+                {firstName: 'John', lastName: 'Doe', email: 'john.doe@gmail.com'},
+                {firstName: 'Jane', lastName: 'Doe', email: 'jane.doe@gmail.com'}
+            ]).then((numRows) => {
+
+                  const sql = "SELECT first_name FROM users WHERE last_name='Doe'";
+                  const dbRows = [];
+                  userDao.streamFromSqlFromMasterRaw(sql)
+                      .on('data', dbRow => dbRows.push(dbRow))
+                      .on('end', () => {
+                          Should.exist(dbRows);
+                          dbRows.should.be.an.Array();
+                          dbRows.length.should.eql(2);
+
+                          dbRows[0].first_name.should.eql('John');
+                          dbRows[1].first_name.should.eql('Jane');
+
+                          Should.not.exist(dbRows[0].email);
+                          Should.not.exist(dbRows[0].firstName);
+                          Should.not.exist(dbRows[0].lastName);
+                          Should.not.exist(dbRows[1].email);
+                          Should.not.exist(dbRows[1].firstName);
+                          Should.not.exist(dbRows[1].lastName);
+
+                          streamFromMasterSpy.calledOnce.should.be.True();
+
+                          done();
+                      });
+              });
+        });
+    });
+
     describe('updateById', function() {
         beforeEach(databaseSetup);
 
@@ -1197,4 +1547,3 @@ describe('MysqlDao', function() {
     });
 
 });
-
