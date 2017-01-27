@@ -1193,6 +1193,23 @@ describe('MysqlDao', function() {
                     });
             });
         });
+
+        it('It should pass errors through the stream', function(done) {
+          let errorEmitted = false;
+          let dataEmitted = false;
+          userDao.streamFromSql('SELECT ERROR SYNTAX...')
+            .on('data', () => dataEmitted = true)
+            .on('error', (error) => {
+                errorEmitted = true;
+                error.should.have.property('code');
+                error.code.should.eql('ER_PARSE_ERROR');
+            })
+            .on('end', () => {
+                errorEmitted.should.be.true;
+                dataEmitted.should.be.false;
+                done();
+            });
+        });
     });
 
     describe('streamFromSqlFromMaster', function() {
@@ -1234,6 +1251,23 @@ describe('MysqlDao', function() {
                     });
             });
         });
+
+        it('It should pass errors through the stream', function(done) {
+          let errorEmitted = false;
+          let dataEmitted = false;
+          userDao.streamFromSqlFromMaster('SELECT ERROR SYNTAX...')
+            .on('data', () => dataEmitted = true)
+            .on('error', (error) => {
+                errorEmitted = true;
+                error.should.have.property('code');
+                error.code.should.eql('ER_PARSE_ERROR');
+            })
+            .on('end', () => {
+                errorEmitted.should.be.true;
+                dataEmitted.should.be.false;
+                done();
+            });
+        });
     });
 
     describe('streamFromSqlRaw', function() {
@@ -1265,6 +1299,23 @@ describe('MysqlDao', function() {
 
                         done();
                     });
+            });
+        });
+
+        it('It should pass errors through the stream', function(done) {
+          let errorEmitted = false;
+          let dataEmitted = false;
+          userDao.streamFromSqlRaw('SELECT ERROR SYNTAX...')
+            .on('data', () => dataEmitted = true)
+            .on('error', (error) => {
+                errorEmitted = true;
+                error.should.have.property('code');
+                error.code.should.eql('ER_PARSE_ERROR');
+            })
+            .on('end', () => {
+                errorEmitted.should.be.true;
+                dataEmitted.should.be.false;
+                done();
             });
         });
     });
@@ -1308,6 +1359,23 @@ describe('MysqlDao', function() {
                           done();
                       });
               });
+        });
+
+        it('It should pass errors through the stream', function(done) {
+          let errorEmitted = false;
+          let dataEmitted = false;
+          userDao.streamFromSqlFromMasterRaw('SELECT ERROR SYNTAX...')
+            .on('data', () => dataEmitted = true)
+            .on('error', (error) => {
+                errorEmitted = true;
+                error.should.have.property('code');
+                error.code.should.eql('ER_PARSE_ERROR');
+            })
+            .on('end', () => {
+                errorEmitted.should.be.true;
+                dataEmitted.should.be.false;
+                done();
+            });
         });
     });
 

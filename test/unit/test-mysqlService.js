@@ -318,6 +318,23 @@ describe('MysqlService', function() {
               });
           })
         })
+          it('It should pass errors through the stream', function(done) {
+            let errorEmitted = false;
+            let dataEmitted = false;
+            mysqlService.streamQuery('SELECT ERROR SYNTAX...')
+              .on('data', () => dataEmitted = true)
+              .on('error', (error) => {
+                  errorEmitted = true;
+                  error.should.have.property('code');
+                  error.code.should.eql('ER_PARSE_ERROR');
+              })
+              .on('end', () => {
+                  errorEmitted.should.be.true;
+                  dataEmitted.should.be.false;
+                  done();
+              });
+          });
+      });
     });
 
     describe('data modification functions', function() {
