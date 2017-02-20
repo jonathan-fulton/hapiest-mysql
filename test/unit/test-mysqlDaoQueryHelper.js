@@ -80,6 +80,15 @@ describe('MysqlDaoQueryHelper', function() {
 
     });
 
+    describe('upsert', function() {
+        it('Should generate an INSERT ... ON DUPLICATE KEY UPDATE statement', function() {
+            const sql = mysqlDaoQueryHelper.upsert({firstName: 'firstName', lastName: 'lastName', password: 'boom!'});
+            Should.exist(sql);
+
+            sql.should.eql("INSERT INTO users (first_name, last_name, password) VALUES ('firstName', 'lastName', 'boom!') ON DUPLICATE KEY UPDATE first_name = 'firstName', last_name = 'lastName', password = 'boom!'");
+        });
+    });
+
     describe('getOne', function() {
 
         it('Should generate a SELECT statement for a single row', function() {
