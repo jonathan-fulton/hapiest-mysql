@@ -70,10 +70,10 @@ class UserDao extends MysqlDao {
 }
 const userDao = new UserDao(mysqlDaoArgs);
 
-class UserAttrDao extends MysqlDao {
-    get tableName() {return 'user_attributes';}
+class TopSecretInfoDao extends MysqlDao {
+    get tableName() {return 'top_secret_info';}
 }
-const userAttrDao = new UserAttrDao(mysqlDaoArgs);
+const topSecretInfoDao = new TopSecretInfoDao(mysqlDaoArgs);
 
 function databaseSetup(done) {
 
@@ -88,20 +88,20 @@ function databaseSetup(done) {
                     date_created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
                 );
         `,
-        'DROP TABLE IF EXISTS user_attributes',
+        'DROP TABLE IF EXISTS top_secret_info',
         `
-                CREATE TABLE user_attributes (
+                CREATE TABLE top_secret_info (
                   id int(11) NOT NULL AUTO_INCREMENT,
-                  user_id int(11) NOT NULL ,
-                  user_lead_id int(11) DEFAULT NULL,
-                  user_subscription_id int(11) DEFAULT NULL,
-                  site_id tinyint(4) DEFAULT NULL,
-                  name varchar(255) DEFAULT NULL,
-                  value varchar(255) DEFAULT NULL,
+                  secret_agent_id int(11) NOT NULL ,
+                  handler_id int(11) DEFAULT NULL,
+                  fake_passport_number int(11) DEFAULT NULL,
+                  bank_account tinyint(4) DEFAULT NULL,
+                  code_name varchar(255) DEFAULT NULL,
+                  intel varchar(255) DEFAULT NULL,
                   date_added datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
                   date_updated datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
                   PRIMARY KEY (id),
-                  UNIQUE KEY uq_user_attribute (user_id,user_lead_id,site_id,name)
+                  UNIQUE KEY uq_top_secret_info (secret_agent_id,handler_id,fake_passport_number,bank_account)
                 )
         `
     ];
@@ -111,7 +111,7 @@ function databaseSetup(done) {
 }
 
 function databaseTeardown(done) {
-    const queries = ['DROP TABLE IF EXISTS users', 'DROP TABLE IF EXISTS user_attributes'];
+    const queries = ['DROP TABLE IF EXISTS users', 'DROP TABLE IF EXISTS top_secret_info'];
     mysqlService.executeQueries(queries)
         .then(() => done(), (err) => done(err));
 }
@@ -204,25 +204,25 @@ describe('MysqlDao', function() {
     describe('upsert', function() {
         beforeEach(databaseSetup);
 
-        it('Should update a single row in the user_attributes table', function() {
-            return userAttrDao.upsert({
-                    user_id: 1, user_lead_id: 1, user_subscription_id: 1, site_id: 1,
-                    name: 'attribute', value: 'value'
+        it('Should update a single row in the top_secret_info table', function() {
+            return topSecretInfoDao.upsert({
+                    secret_agent_id: 1, handler_id: 1, fake_passport_number: 1, bank_account: 1,
+                    code_name: 'Duchess', intel: 'The Briefcase'
                 })
                 .then(id => {
                     Should.exist(id);
                 });
         });
 
-        it('Should update a single row in the user_attributes table', function() {
-            return userAttrDao.upsert({
-                user_id: 1, user_lead_id: 1, user_subscription_id: 1, site_id: 1,
-                name: 'attribute', value: 'value'
+        it('Should update a single row in the top_secret_info table', function() {
+            return topSecretInfoDao.upsert({
+                    secret_agent_id: 1, handler_id: 1, fake_passport_number: 1, bank_account: 1,
+                    code_name: 'Duchess', intel: 'The Briefcase'
             })
                 .then(id => {
-                    let promise = userAttrDao.upsert({
-                        user_id: 1, user_lead_id: 1, user_subscription_id: 1, site_id: 1,
-                        name: 'attribute', value: 'new value'
+                    let promise = topSecretInfoDao.upsert({
+                        secret_agent_id: 1, handler_id: 1, fake_passport_number: 1, bank_account: 1,
+                        code_name: 'Duchess', intel: 'Safehouse Location'
                     });
                     return Promise.all([promise]).then(results => results[0]);
                 })
