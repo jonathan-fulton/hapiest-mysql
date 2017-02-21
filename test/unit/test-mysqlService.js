@@ -421,7 +421,6 @@ describe('MysqlService', function() {
                         Should.exist(results);
                         results.should.be.instanceof(MysqlModificationResult);
                         results.affectedRows.should.eql(1);
-                        results.changedRows.should.eql(0);
                     });
             });
 
@@ -438,7 +437,6 @@ describe('MysqlService', function() {
                         Should.exist(results);
                         results.should.be.instanceof(MysqlModificationResult);
                         results.affectedRows.should.eql(2);  // MySQL returns 1 for an insert, 2 if the update happens instead
-                        results.changedRows.should.eql(0);
                     });
             });
         });

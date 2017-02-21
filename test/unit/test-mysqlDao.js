@@ -92,8 +92,8 @@ function databaseSetup(done) {
         `
                 CREATE TABLE top_secret_info (
                   id int(11) NOT NULL AUTO_INCREMENT,
-                  secret_agent_id int(11) NOT NULL ,
-                  handler_id int(11) DEFAULT NULL,
+                  secret_agent_code int(11) NOT NULL ,
+                  handler_code int(11) DEFAULT NULL,
                   fake_passport_number int(11) DEFAULT NULL,
                   bank_account tinyint(4) DEFAULT NULL,
                   code_name varchar(255) DEFAULT NULL,
@@ -101,7 +101,7 @@ function databaseSetup(done) {
                   date_added datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
                   date_updated datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
                   PRIMARY KEY (id),
-                  UNIQUE KEY uq_top_secret_info (secret_agent_id,handler_id,fake_passport_number,bank_account)
+                  UNIQUE KEY uq_top_secret_info (secret_agent_code,handler_code,fake_passport_number,bank_account)
                 )
         `
     ];
@@ -204,30 +204,29 @@ describe('MysqlDao', function() {
     describe('upsert', function() {
         beforeEach(databaseSetup);
 
+        const insertArgs = {
+            secret_agent_code: 1, handler_code: 1, fake_passport_number: 1, bank_account: 1,
+            code_name: 'Duchess', intel: 'The Briefcase'
+        };
+        const onDupUpdateArgs = {intel: 'The Briefcase'};
+
         it('Should update a single row in the top_secret_info table', function() {
-            return topSecretInfoDao.upsert({
-                    secret_agent_id: 1, handler_id: 1, fake_passport_number: 1, bank_account: 1,
-                    code_name: 'Duchess', intel: 'The Briefcase'
-                })
-                .then(id => {
-                    Should.exist(id);
+            return topSecretInfoDao.upsert(insertArgs, onDupUpdateArgs)
+                .then(result => {
+                    Should.exist(result);
+                    result.should.eql(1);
                 });
         });
 
         it('Should update a single row in the top_secret_info table', function() {
-            return topSecretInfoDao.upsert({
-                    secret_agent_id: 1, handler_id: 1, fake_passport_number: 1, bank_account: 1,
-                    code_name: 'Duchess', intel: 'The Briefcase'
-            })
-                .then(id => {
-                    let promise = topSecretInfoDao.upsert({
-                        secret_agent_id: 1, handler_id: 1, fake_passport_number: 1, bank_account: 1,
-                        code_name: 'Duchess', intel: 'Safehouse Location'
-                    });
+            return topSecretInfoDao.upsert(insertArgs, onDupUpdateArgs)
+                .then(result => {
+                    let promise = topSecretInfoDao.upsert(insertArgs,  {intel: 'Safehouse Location'});
                     return Promise.all([promise]).then(results => results[0]);
                 })
-                .then(id => {
-                    Should.exist(id);
+                .then(result => {
+                    Should.exist(result);
+                    result.should.eql(2);
                 });
         });
     });
