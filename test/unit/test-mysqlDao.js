@@ -70,6 +70,11 @@ class UserDao extends MysqlDao {
 }
 const userDao = new UserDao(mysqlDaoArgs);
 
+class UserAttrDao extends MysqlDao {
+    get tableName() {return 'user_attributes';}
+}
+const userAttrDao = new UserAttrDao(mysqlDaoArgs);
+
 function databaseSetup(done) {
 
     const queries = [
@@ -82,7 +87,23 @@ function databaseSetup(done) {
                     email VARCHAR(255) NOT NULL,
                     date_created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
                 );
-            `
+        `,
+        'DROP TABLE IF EXISTS user_attributes',
+        `
+                CREATE TABLE user_attributes (
+                  id int(11) NOT NULL AUTO_INCREMENT,
+                  user_id int(11) NOT NULL ,
+                  user_lead_id int(11) DEFAULT NULL,
+                  user_subscription_id int(11) DEFAULT NULL,
+                  site_id tinyint(4) DEFAULT NULL,
+                  name varchar(255) DEFAULT NULL,
+                  value varchar(255) DEFAULT NULL,
+                  date_added datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                  date_updated datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+                  PRIMARY KEY (id),
+                  UNIQUE KEY uq_user_attribute (user_id,user_lead_id,site_id,name)
+                )
+        `
     ];
 
     mysqlService.executeQueries(queries)
@@ -90,7 +111,7 @@ function databaseSetup(done) {
 }
 
 function databaseTeardown(done) {
-    const queries = ['DROP TABLE IF EXISTS users'];
+    const queries = ['DROP TABLE IF EXISTS users', 'DROP TABLE IF EXISTS user_attributes'];
     mysqlService.executeQueries(queries)
         .then(() => done(), (err) => done(err));
 }
@@ -176,6 +197,37 @@ describe('MysqlDao', function() {
                         });
 
                     return Promise.all([checkRowPromise1, checkRowPromise2]);
+                });
+        });
+    });
+
+    describe('upsert', function() {
+        beforeEach(databaseSetup);
+
+        it('Should update a single row in the user_attributes table', function() {
+            return userAttrDao.upsert({
+                    user_id: 1, user_lead_id: 1, user_subscription_id: 1, site_id: 1,
+                    name: 'attribute', value: 'value'
+                })
+                .then(id => {
+                    Should.exist(id);
+                });
+        });
+
+        it('Should update a single row in the user_attributes table', function() {
+            return userAttrDao.upsert({
+                user_id: 1, user_lead_id: 1, user_subscription_id: 1, site_id: 1,
+                name: 'attribute', value: 'value'
+            })
+                .then(id => {
+                    let promise = userAttrDao.upsert({
+                        user_id: 1, user_lead_id: 1, user_subscription_id: 1, site_id: 1,
+                        name: 'attribute', value: 'new value'
+                    });
+                    return Promise.all([promise]).then(results => results[0]);
+                })
+                .then(id => {
+                    Should.exist(id);
                 });
         });
     });
