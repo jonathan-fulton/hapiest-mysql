@@ -4,11 +4,15 @@ const Should = require('should');
 const Mysql = require('mysql');
 const Squel = require('squel');
 const VO = require('hapiest-vo');
+const Moment = require('moment');
 
 const MysqlDaoQueryHelper = require('../../lib/mysqlDaoQueryHelper');
 
-const cleanFunction = value => Mysql.escape(value, false, '+00:00');
+const cleanFunction = value => Mysql.escape(value, false, 'utc');
 const mysqlDaoQueryHelper = new MysqlDaoQueryHelper('users', cleanFunction);
+
+const localTimezoneCleanFunction = value => Mysql.escape(value);
+const localMysqlDaoQueryHelper = new MysqlDaoQueryHelper('users', localTimezoneCleanFunction);
 
 class UserCreateArgs extends VO {
     constructor(args) {
@@ -103,6 +107,28 @@ describe('MysqlDaoQueryHelper', function() {
             sql.should.eql("SELECT * FROM users WHERE (first_name IS NULL) AND (last_name = 'Doe') LIMIT 1");
         });
 
+        it('Should generate dates with for a utc timezone ', function() {
+            const now = Moment();
+            const nowDate = now.toDate();
+            const utcDateString = now.utc().format('YYYY-MM-DD HH:mm:ss.SSS');
+
+            const sql = mysqlDaoQueryHelper.getOne({dateAdded: nowDate});
+            Should.exist(sql);
+
+            sql.should.eql(`SELECT * FROM users WHERE (date_added = '${utcDateString}') LIMIT 1`);
+        });
+
+        it('Should generate dates with for local timezone ', function() {
+            const now = Moment();
+            const nowDate = now.toDate();
+            const localDateString = now.local().format('YYYY-MM-DD HH:mm:ss.SSS');
+
+            const sql = localMysqlDaoQueryHelper.getOne({dateAdded: nowDate});
+            Should.exist(sql);
+
+            sql.should.eql(`SELECT * FROM users WHERE (date_added = '${localDateString}') LIMIT 1`);
+        });
+
     });
 
     describe('getAll', function() {
@@ -152,13 +178,13 @@ describe('MysqlDaoQueryHelper', function() {
         it('Should generate a SELECT statement with a query object and gt/lt', function() {
             const sql = mysqlDaoQueryHelper.getAll({
                 dateAdded: {
-                    gt: new Date('1990-01-05T13:30:00Z'),
+                    gte: new Date('1990-01-05T13:30:00Z'),
                     lt: new Date('1990-01-10T13:30:00Z')
                 }
             });
             Should.exist(sql);
 
-            sql.should.eql("SELECT * FROM users WHERE (date_added > '1990-01-05 13:30:00.000' AND date_added < '1990-01-10 13:30:00.000')");
+            sql.should.eql("SELECT * FROM users WHERE (date_added >= '1990-01-05 13:30:00.000' AND date_added < '1990-01-10 13:30:00.000')");
         });
 
         it('Should generate a SELECT statement with a query object and gte/lte', function() {
@@ -318,6 +344,26 @@ describe('MysqlDaoQueryHelper', function() {
             Should.exist(isNotNullClean);
             isNotNullClean.should.eql("'IS NOT NULL'");
         });
+
+        it('Should clean a date configured for utc time', function() {
+            const now = Moment();
+            const date = now.toDate();
+            const dateClean = mysqlDaoQueryHelper.clean(date);
+            const expectedDateString = now.utc().format('YYYY-MM-DD HH:mm:ss.SSS');
+
+            Should.exist(dateClean);
+            dateClean.should.eql(`'${expectedDateString}'`);
+        });
+
+        it('Should clean a date configured for local time', function() {
+            const now = Moment();
+            const date = now.toDate();
+            const dateClean = localMysqlDaoQueryHelper.clean(date);
+            const expectedDateString = now.local().format('YYYY-MM-DD HH:mm:ss.SSS');
+
+            Should.exist(dateClean);
+            dateClean.should.eql(`'${expectedDateString}'`);
+        })
     });
 
     describe('cleanSpecial', function() {
