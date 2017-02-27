@@ -105,17 +105,6 @@ describe('MysqlQuery', function(){
             }
             Should.not.exist(error);
         });
-        it('Should throw an error for INSERT ... ON DUPLICATE KEY UPDATE queries', function() {
-            const query = "INSERT INTO users (first_name, last_name, password) VALUES ('firstName', 'lastName', 'boom!') ON DUPLICATE KEY UPDATE first_name = 'firstName', last_name = 'lastName', password = 'boom!'";
-            let error = null;
-            try {
-                const result = MysqlQuery.validateInsert(query);
-            } catch(e) {
-                error = e;
-            }
-            Should.exist(error);
-            error.message.should.eql("Invalid INSERT query");
-        });
         it('Should throw an error for UPDATE queries', function() {
             const query = "    UPDATE table SET one=1 WHERE id=2 ;";
             let error = null;
@@ -385,11 +374,6 @@ describe('MysqlQuery', function(){
         });
         it('Should return false for UPDATE queries', function() {
             const query = "    UPDATE table SET one=1 WHERE id=2 ;";
-            const result = MysqlQuery.isInsert(query);
-            result.should.eql(false);
-        });
-        it('Should return false for INSERT ... ON DUPLICATE KEY UPDATE queries', function() {
-            const query = "INSERT INTO users (first_name, last_name, password) VALUES ('firstName', 'lastName', 'boom!') ON DUPLICATE KEY UPDATE first_name = 'firstName', last_name = 'lastName', password = 'boom!'";
             const result = MysqlQuery.isInsert(query);
             result.should.eql(false);
         });
