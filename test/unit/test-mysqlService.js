@@ -411,6 +411,36 @@ describe('MysqlService', function() {
             });
         });
 
+        describe('upsert', function() {
+            beforeEach(databaseSetup);
+            after(databaseTeardown);
+
+            it('Should insert a new value in the database', function() {
+                return mysqlService.upsert('INSERT INTO __testing(colInt, colVarchar) VALUES(9, \'nine\') ON DUPLICATE KEY UPDATE colInt = 9, colVarchar = \'nine\'')
+                    .then(results => {
+                        Should.exist(results);
+                        results.should.be.instanceof(MysqlModificationResult);
+                        results.affectedRows.should.eql(1);
+                    });
+            });
+
+            it('Should update an existing value in the database', function() {
+                return mysqlService.upsert('INSERT INTO __testing(colInt, colVarchar) VALUES(9, \'nine\') ON DUPLICATE KEY UPDATE colInt = 9, colVarchar = \'nine\'')
+                    .then(results => {
+                        Should.exist(results);
+                        results.should.be.instanceof(MysqlModificationResult);
+                        results.affectedRows.should.eql(1);
+                        results.changedRows.should.eql(0);
+                    })
+                    .then(() => mysqlService.upsert('INSERT INTO __testing(colInt, colVarchar) VALUES(10, \'nine\') ON DUPLICATE KEY UPDATE colInt = 99, colVarchar = \'nine\''))
+                    .then(results => {
+                        Should.exist(results);
+                        results.should.be.instanceof(MysqlModificationResult);
+                        results.affectedRows.should.eql(2);  // MySQL returns 1 for an insert, 2 if the update happens instead
+                    });
+            });
+        });
+
         describe('delete', function() {
             beforeEach(databaseSetup);
             after(databaseTeardown);

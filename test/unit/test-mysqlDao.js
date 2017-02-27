@@ -70,6 +70,11 @@ class UserDao extends MysqlDao {
 }
 const userDao = new UserDao(mysqlDaoArgs);
 
+class TopSecretInfoDao extends MysqlDao {
+    get tableName() {return 'top_secret_info';}
+}
+const topSecretInfoDao = new TopSecretInfoDao(mysqlDaoArgs);
+
 function databaseSetup(done) {
 
     const queries = [
@@ -82,7 +87,23 @@ function databaseSetup(done) {
                     email VARCHAR(255) NOT NULL,
                     date_created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
                 );
-            `
+        `,
+        'DROP TABLE IF EXISTS top_secret_info',
+        `
+                CREATE TABLE top_secret_info (
+                  id int(11) NOT NULL AUTO_INCREMENT,
+                  secret_agent_code int(11) NOT NULL ,
+                  handler_code int(11) DEFAULT NULL,
+                  fake_passport_number int(11) DEFAULT NULL,
+                  bank_account tinyint(4) DEFAULT NULL,
+                  code_name varchar(255) DEFAULT NULL,
+                  intel varchar(255) DEFAULT NULL,
+                  date_added datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                  date_updated datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+                  PRIMARY KEY (id),
+                  UNIQUE KEY uq_top_secret_info (secret_agent_code,handler_code,fake_passport_number,bank_account)
+                )
+        `
     ];
 
     mysqlService.executeQueries(queries)
@@ -90,7 +111,7 @@ function databaseSetup(done) {
 }
 
 function databaseTeardown(done) {
-    const queries = ['DROP TABLE IF EXISTS users'];
+    const queries = ['DROP TABLE IF EXISTS users', 'DROP TABLE IF EXISTS top_secret_info'];
     mysqlService.executeQueries(queries)
         .then(() => done(), (err) => done(err));
 }
@@ -176,6 +197,36 @@ describe('MysqlDao', function() {
                         });
 
                     return Promise.all([checkRowPromise1, checkRowPromise2]);
+                });
+        });
+    });
+
+    describe('upsert', function() {
+        beforeEach(databaseSetup);
+
+        const insertArgs = {
+            secret_agent_code: 1, handler_code: 1, fake_passport_number: 1, bank_account: 1,
+            code_name: 'Duchess', intel: 'The Briefcase'
+        };
+        const onDupUpdateArgs = {intel: 'The Briefcase'};
+
+        it('Should update a single row in the top_secret_info table', function() {
+            return topSecretInfoDao.upsert(insertArgs, onDupUpdateArgs)
+                .then(result => {
+                    Should.exist(result);
+                    result.should.eql(1);
+                });
+        });
+
+        it('Should update a single row in the top_secret_info table', function() {
+            return topSecretInfoDao.upsert(insertArgs, onDupUpdateArgs)
+                .then(result => {
+                    let promise = topSecretInfoDao.upsert(insertArgs,  {intel: 'Safehouse Location'});
+                    return Promise.all([promise]).then(results => results[0]);
+                })
+                .then(result => {
+                    Should.exist(result);
+                    result.should.eql(2);
                 });
         });
     });
