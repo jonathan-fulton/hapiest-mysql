@@ -91,6 +91,40 @@ describe('MysqlDaoQueryHelper', function() {
 
             sql.should.eql("INSERT INTO users (first_name, last_name, password) VALUES ('firstName', 'lastName', 'boom!') ON DUPLICATE KEY UPDATE password = 'ka-boom!'");
         });
+
+        it('Should generate an INSERT ... ON DUPLICATE KEY UPDATE statement for multiple rows with insert values', function() {
+            const insertArgs = [
+                {firstName: 'f1', lastName: 'l1', password: 'p1'},
+                {firstName: 'f2', lastName: 'l2', password: 'p2'},
+                {firstName: 'f3', lastName: 'l3', password: 'p3'}
+            ];
+
+            const updateArgs = [
+                'firstName', 'lastName', 'password'
+            ];
+
+            const sql = mysqlDaoQueryHelper.upsertBulk(insertArgs, updateArgs);
+            Should.exist(sql);
+
+            sql.should.eql("INSERT INTO users (first_name, last_name, password) VALUES ('f1', 'l1', 'p1'), ('f2', 'l2', 'p2'), ('f3', 'l3', 'p3') ON DUPLICATE KEY UPDATE first_name = VALUES(first_name), last_name = VALUES(last_name), password = VALUES(password)");
+        });
+
+        it('Should generate an INSERT ... ON DUPLICATE KEY UPDATE statement for multiple rows with specific values', function() {
+            const insertArgs = [
+                {firstName: 'f1', lastName: 'l1', password: 'p1'},
+                {firstName: 'f2', lastName: 'l2', password: 'p2'},
+                {firstName: 'f3', lastName: 'l3', password: 'p3'}
+            ];
+
+            const updateArgs = {
+                password: 'newpassword1234'
+            };
+
+            const sql = mysqlDaoQueryHelper.upsertBulk(insertArgs, updateArgs);
+            Should.exist(sql);
+
+            sql.should.eql("INSERT INTO users (first_name, last_name, password) VALUES ('f1', 'l1', 'p1'), ('f2', 'l2', 'p2'), ('f3', 'l3', 'p3') ON DUPLICATE KEY UPDATE password = 'newpassword1234'");
+        });
     });
 
     describe('getOne', function() {

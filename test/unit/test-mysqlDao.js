@@ -34,14 +34,35 @@ class UserCreateArgs extends VO {
     get email() { return this.get('email'); }
 }
 
-const createUserFromDbRow = (dbRow) => {
-    const userArgs = {};
-    Object.keys(dbRow).forEach(columnName => {
-        const camelCaseColumn = _.camelCase(columnName);
-        userArgs[camelCaseColumn] = dbRow[columnName];
-    });
-    return new User(userArgs);
+class TopSecretInfo extends VO {
+    constructor(args) {
+        super();
+        this._addProperties(args);
+    }
+    get id() { return this.get('id'); }
+    get secretAgentCode() { return this.get('secretAgentCode'); }
+    get handlerCode() { return this.get('handlerCode'); }
+    get intel() { return this.get('intel'); }
+    get dateAdded() { return this.get('dateAdded'); }
+    get dateUpdated() { return this.get('dateUpdated'); }
+    get fakePassportNumber() { return this.get('fakePassportNumber'); }
+    get bankAccount() { return this.get('bankAccount'); }
+    get codeName() { return this.get('codeName'); }
+}
+
+const createFromDbRow = (factory) => {
+    return function(dbRow) {
+        const args = {};
+        Object.keys(dbRow).forEach(columnName => {
+            const camelCaseColumn = _.camelCase(columnName);
+            args[camelCaseColumn] = dbRow[columnName];
+        });
+        return new factory(args);
+    }
 };
+
+const createUserFromDbRow = createFromDbRow(User);
+const createTopSecretInfoFromDbRow = createFromDbRow(TopSecretInfo);
 
 const LoggerFactory = require('hapiest-logger/lib/loggerFactory');
 const LoggerConfigFactory = require('hapiest-logger/lib/loggerConfigFactory');
@@ -73,7 +94,11 @@ const userDao = new UserDao(mysqlDaoArgs);
 class TopSecretInfoDao extends MysqlDao {
     get tableName() {return 'top_secret_info';}
 }
-const topSecretInfoDao = new TopSecretInfoDao(mysqlDaoArgs);
+const topSecretInfoDao = new TopSecretInfoDao(MysqlDaoArgsFactory.createFromJsObj({
+    mysqlService: mysqlService,
+    createVoFromDbRowFunction: createTopSecretInfoFromDbRow,
+    logger: logger
+}));
 
 function databaseSetup(done) {
 
@@ -90,19 +115,19 @@ function databaseSetup(done) {
         `,
         'DROP TABLE IF EXISTS top_secret_info',
         `
-                CREATE TABLE top_secret_info (
-                  id int(11) NOT NULL AUTO_INCREMENT,
-                  secret_agent_code int(11) NOT NULL ,
-                  handler_code int(11) DEFAULT NULL,
-                  fake_passport_number int(11) DEFAULT NULL,
-                  bank_account tinyint(4) DEFAULT NULL,
-                  code_name varchar(255) DEFAULT NULL,
-                  intel varchar(255) DEFAULT NULL,
-                  date_added datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                  date_updated datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
-                  PRIMARY KEY (id),
-                  UNIQUE KEY uq_top_secret_info (secret_agent_code,handler_code,fake_passport_number,bank_account)
-                )
+        CREATE TABLE top_secret_info (
+          id int(11) NOT NULL AUTO_INCREMENT,
+          secret_agent_code int(11) NOT NULL ,
+          handler_code int(11) DEFAULT NULL,
+          fake_passport_number int(11) DEFAULT NULL,
+          bank_account tinyint(4) DEFAULT NULL,
+          code_name varchar(255) DEFAULT NULL,
+          intel varchar(255) DEFAULT NULL,
+          date_added datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          date_updated datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+          PRIMARY KEY (id),
+          UNIQUE KEY uq_top_secret_info (secret_agent_code,handler_code,fake_passport_number,bank_account)
+        )
         `
     ];
 
@@ -210,7 +235,7 @@ describe('MysqlDao', function() {
         };
         const onDupUpdateArgs = {intel: 'The Briefcase'};
 
-        it('Should update a single row in the top_secret_info table', function() {
+        it('Should create a single row in the top_secret_info table', function() {
             return topSecretInfoDao.upsert(insertArgs, onDupUpdateArgs)
                 .then(result => {
                     Should.exist(result);
@@ -227,6 +252,104 @@ describe('MysqlDao', function() {
                 .then(result => {
                     Should.exist(result);
                     result.should.eql(2);
+                });
+        });
+    });
+
+    describe('upsertBulk', function() {
+        beforeEach(databaseSetup);
+
+        it('Should create multiple rows in the top_secret_info table', function() {
+            const insertArgs = [
+                {
+                    secret_agent_code: 1, handler_code: 1, fake_passport_number: 1, bank_account: 1,
+                    code_name: 'Duchess', intel: 'The Briefcase'
+                },
+                {
+                    secret_agent_code: 2, handler_code: 2, fake_passport_number: 2, bank_account: 2,
+                    code_name: 'Otter', intel: 'Dead Drop'
+                },
+                {
+                    secret_agent_code: 3, handler_code: 3, fake_passport_number: 3, bank_account: 3,
+                    code_name: 'Pinto', intel: 'Poison Pill'
+                }
+            ];
+            const onDupUpdateArgs = ['intel'];
+
+            return topSecretInfoDao.upsertBulk(insertArgs, onDupUpdateArgs)
+                .then(result => {
+                    Should.exist(result);
+                    result.should.eql(3);
+                });
+        });
+
+        it('Should update a row with a value not specified in the insert', function() {
+            const insertArgs = [
+                {
+                    secret_agent_code: 1, handler_code: 1, fake_passport_number: 1, bank_account: 1,
+                    code_name: 'Duchess', intel: 'The Briefcase'
+                }
+            ];
+
+            const onDupUpdateArgs = ['intel'];
+
+            return topSecretInfoDao.upsertBulk(insertArgs, onDupUpdateArgs)
+                .then(result => {
+                    let promise = topSecretInfoDao.upsertBulk(insertArgs,  { intel: 'Troop Movements' });
+                    return Promise.all([promise]).then(results => results[0]);
+                })
+                .then(result => {
+                    Should.exist(result);
+                    result.should.eql(2);
+
+                    const assertPromise = topSecretInfoDao.getOne({secretAgentCode: 1})
+                        .then(info => {
+                            Should.exist(info);
+                            info.intel.should.eql('Troop Movements');
+                        });
+                    return Promise.all([assertPromise]);
+                });
+        });
+
+        it('Should update multiple rows in the top_secret_info table', function() {
+            const insertArgs = [
+                {
+                    secret_agent_code: 1, handler_code: 1, fake_passport_number: 1, bank_account: 1,
+                    code_name: 'Duchess', intel: 'The Briefcase'
+                },
+                {
+                    secret_agent_code: 2, handler_code: 2, fake_passport_number: 2, bank_account: 2,
+                    code_name: 'Otter', intel: 'Dead Drop'
+                }
+                , {
+                    secret_agent_code: 3, handler_code: 3, fake_passport_number: 3, bank_account: 3,
+                    code_name: 'Pinto', intel: 'Poison Pill'
+                }
+            ];
+            const onDupUpdateArgs = ['intel'];
+
+            return topSecretInfoDao.upsertBulk(insertArgs, onDupUpdateArgs)
+                .then(result => {
+                    Should.exist(result);
+                    result.should.eql(3);
+                    _.set(insertArgs[0], 'intel', 'Spy Photos');
+                    _.set(insertArgs[1], 'intel', 'Blackmail Material');
+                    let promise = topSecretInfoDao.upsertBulk(insertArgs,  ['intel']);
+                    return Promise.all([promise]).then(results => results[0]);
+                })
+                .then(result => {
+                    Should.exist(result);
+                    result.should.eql(5);
+                    /*
+                     * Why 5?
+                     *
+                     * https://dev.mysql.com/doc/refman/5.7/en/insert-on-duplicate.html
+                     *
+                     * With ON DUPLICATE KEY UPDATE, the affected-rows value per row is 1 if the row is inserted as
+                     * a new row, 2 if an existing row is updated, and 0 if an existing row is set to its current
+                     * values. If you specify the CLIENT_FOUND_ROWS flag to mysql_real_connect() when connecting to
+                     * mysqld, the affected-rows value is 1 (not 0) if an existing row is set to its current values.
+                     */
                 });
         });
     });
