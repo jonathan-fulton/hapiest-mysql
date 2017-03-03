@@ -67,6 +67,13 @@ describe('MysqlDaoQueryHelper', function() {
             sql.should.eql(`INSERT INTO users (first_name, last_name, password) VALUES ('Bob', 'Smith', 'another password')`);
         });
 
+        it('Should generate an INSERT statement for a single entry in users table with raw inputs', function() {
+            const sql = mysqlDaoQueryHelper.create({firstName: 'firstName', lastName: 'lastName', password: { raw: 'TRIM("   mybadpasswordinput    ")' }, dateAdded: new Date('1990-01-05T13:30:00Z')});
+            Should.exist(sql);
+
+            sql.should.eql(`INSERT INTO users (first_name, last_name, password, date_added) VALUES ('firstName', 'lastName', TRIM("   mybadpasswordinput    "), '1990-01-05 13:30:00.000')`);
+        });
+
     });
 
     describe('createBulk', function() {
@@ -90,6 +97,13 @@ describe('MysqlDaoQueryHelper', function() {
             Should.exist(sql);
 
             sql.should.eql("INSERT INTO users (first_name, last_name, password) VALUES ('firstName', 'lastName', 'boom!') ON DUPLICATE KEY UPDATE password = 'ka-boom!'");
+        });
+
+        it('Should generate an INSERT ... ON DUPLICATE KEY UPDATE statement for raw update args', function() {
+            const sql = mysqlDaoQueryHelper.upsert({firstName: 'firstName', lastName: 'lastName', password: 'boom!'}, {password: { raw: 'TRIM("   mybadpasswordinput    ")' } });
+            Should.exist(sql);
+
+            sql.should.eql(`INSERT INTO users (first_name, last_name, password) VALUES ('firstName', 'lastName', 'boom!') ON DUPLICATE KEY UPDATE password = TRIM("   mybadpasswordinput    ")`);
         });
 
         it('Should generate an INSERT ... ON DUPLICATE KEY UPDATE statement for multiple rows with insert values', function() {
