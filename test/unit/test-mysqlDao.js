@@ -254,6 +254,18 @@ describe('MysqlDao', function() {
                     result.should.eql(2);
                 });
         });
+
+        it('Should update a single row in the top_secret_info table with a raw input', function() {
+            return topSecretInfoDao.upsert(insertArgs, onDupUpdateArgs)
+            .then(result => {
+                let promise = topSecretInfoDao.upsert(insertArgs,  {intel: { raw: 'TRIM("     Safehouse Location   ")' }});
+                return Promise.all([promise]).then(results => results[0]);
+            })
+            .then(result => {
+                Should.exist(result);
+                result.should.eql(2);
+            });
+        });
     });
 
     describe('upsertBulk', function() {
