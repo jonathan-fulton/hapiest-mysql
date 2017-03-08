@@ -193,23 +193,25 @@ describe('MysqlDao', function() {
                 `VALUES ('Already','Here','existing@email.com')`
             ).then(insertResult => {
 
+                insertResult.affectedRows.should.equal(1);
+
                 return userDao.create(
-                    new UserCreateArgs({firstName: 'Ignore', lastName: 'Me', email: 'existing@email.com'}),
+                    {firstName: 'Ignore', lastName: 'Me', email: 'existing@email.com'},
                     true
                 ).then(id => {
 
-                        Should.exist(id);
-                        id.should.be.a.Number();
+                    Should.exist(id);
+                    id.should.equal(0);
 
-                        const checkRowPromise = mysqlService.selectOne(`SELECT * FROM users WHERE email = 'existing@email.com'`)
-                            .then(dbRow => {
-                                Should.exist(dbRow);
-                                dbRow.first_name.should.eql('Already');
-                                dbRow.last_name.should.eql('Here');
-                                dbRow.email.should.eql('existing@email.com');
-                            });
-                        return Promise.all([checkRowPromise]);
-                    })
+                    const checkRowPromise = mysqlService.selectOne(`SELECT * FROM users WHERE email = 'existing@email.com'`)
+                        .then(dbRow => {
+                            Should.exist(dbRow);
+                            dbRow.first_name.should.eql('Already');
+                            dbRow.last_name.should.eql('Here');
+                            dbRow.email.should.eql('existing@email.com');
+                        });
+                    return Promise.all([checkRowPromise]);
+                });
             });
         });
 
@@ -249,6 +251,54 @@ describe('MysqlDao', function() {
 
                     return Promise.all([checkRowPromise1, checkRowPromise2]);
                 });
+        });
+
+        it('Should respect duplicate ignore option', () => {
+            return mysqlService.insert(
+                `INSERT INTO users (first_name, last_name, email) ` +
+                `VALUES ('Already','Here','existing@email.com')`
+            ).then(insertResult => {
+
+                insertResult.affectedRows.should.equal(1);
+
+                return userDao.createBulk(
+                    [
+                        {firstName: 'John', lastName: 'Doe', email: 'john.doe@gmail.com'},
+                        {firstName: 'Ignore', lastName: 'Me', email: 'existing@email.com'},
+                        {firstName: 'Jane', lastName: 'Doe', email: 'jane.doe@gmail.com'},
+                        {firstName: 'Also', lastName: 'Ignore', email: 'existing@email.com'},
+                    ], true
+                ).then(numRows => {
+                    Should.exist(numRows);
+                    numRows.should.eql(4);
+
+                    const checkRowPromise1 = mysqlService.selectOne(`SELECT * FROM users WHERE email = 'existing@email.com'`)
+                        .then(dbRow => {
+                            Should.exist(dbRow);
+                            dbRow.first_name.should.eql('Already');
+                            dbRow.last_name.should.eql('Here');
+                            dbRow.email.should.eql('existing@email.com');
+                        });
+
+                    const checkRowPromise2 = mysqlService.selectOne(`SELECT * FROM users WHERE email = 'john.doe@gmail.com'`)
+                        .then(dbRow => {
+                            Should.exist(dbRow);
+                            dbRow.first_name.should.eql('John');
+                            dbRow.last_name.should.eql('Doe');
+                            dbRow.email.should.eql('john.doe@gmail.com');
+                        });
+
+                    const checkRowPromise3 = mysqlService.selectOne(`SELECT * FROM users WHERE email = 'jane.doe@gmail.com'`)
+                        .then(dbRow => {
+                            Should.exist(dbRow);
+                            dbRow.first_name.should.eql('Jane');
+                            dbRow.last_name.should.eql('Doe');
+                            dbRow.email.should.eql('jane.doe@gmail.com');
+                        });
+
+                    return Promise.all([checkRowPromise1, checkRowPromise2, checkRowPromise3]);
+                });
+            });
         });
     });
 
