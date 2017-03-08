@@ -212,6 +212,14 @@ describe('MysqlDao', function() {
                         });
                     return Promise.all([checkRowPromise]);
                 });
+            }).then(() => {
+                return userDao.create(
+                    {firstName: 'Throw', lastName: 'Error', email: 'existing@email.com'}
+                ).then(() => {
+                    Should.fail('No duplicate key error when it should have been');
+                })
+            }).catch(e => {
+                e.message.should.match(/mysql/i);
             });
         });
 
@@ -297,9 +305,23 @@ describe('MysqlDao', function() {
                         });
 
                     return Promise.all([checkRowPromise1, checkRowPromise2, checkRowPromise3]);
+                }).then(() => {
+                    return userDao.createBulk(
+                        [
+                            {firstName: 'John', lastName: 'Doe', email: 'john.doe@gmail.com'},
+                            {firstName: 'Ignore', lastName: 'Me', email: 'existing@email.com'},
+                            {firstName: 'Jane', lastName: 'Doe', email: 'jane.doe@gmail.com'},
+                            {firstName: 'Also', lastName: 'Ignore', email: 'existing@email.com'},
+                        ]
+                    ).then(() => {
+                        Should.fail('No duplicate key error when it should have been');
+                    })
+                }).catch(e => {
+                    e.message.should.match(/mysql/i);
                 });
             });
         });
+
     });
 
     describe('upsert', function() {
