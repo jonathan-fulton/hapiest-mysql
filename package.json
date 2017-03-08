@@ -1,10 +1,10 @@
 {
   "name": "hapiest-mysql",
-  "version": "0.0.39",
+  "version": "0.0.40",
   "description": "A wrapper around mysql that provides a very descriptive way of running queries.",
   "main": "index.js",
   "scripts": {
-    "test": "NODE_ENV=test node_modules/mocha/bin/mocha ./test/unit"
+    "test": "NODE_ENV=test node_modules/mocha/bin/mocha ./test/unit --timeout 10000"
   },
   "repository": {
     "type": "git",

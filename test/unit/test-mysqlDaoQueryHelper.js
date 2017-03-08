@@ -74,6 +74,18 @@ describe('MysqlDaoQueryHelper', function() {
             sql.should.eql(`INSERT INTO users (first_name, last_name, password, date_added) VALUES ('firstName', 'lastName', TRIM("   mybadpasswordinput    "), '1990-01-05 13:30:00.000')`);
         });
 
+        it('Should generate an INSERT statement to handle ignoring duplicate keys', function() {
+            const sql = mysqlDaoQueryHelper.create({
+                firstName: 'firstName',
+                lastName: 'lastName',
+                password: { raw: 'TRIM("   mybadpasswordinput    ")' },
+                dateAdded: new Date('1990-01-05T13:30:00Z')
+            }, {ignoreOnDuplicateKey: true});
+
+            Should.exist(sql);
+            sql.should.eql(`INSERT INTO users (first_name, last_name, password, date_added) VALUES ('firstName', 'lastName', TRIM("   mybadpasswordinput    "), '1990-01-05 13:30:00.000') ON DUPLICATE KEY UPDATE first_name = first_name`);
+        });
+
     });
 
     describe('createBulk', function() {
@@ -87,6 +99,18 @@ describe('MysqlDaoQueryHelper', function() {
             Should.exist(sql);
 
             sql.should.eql("INSERT INTO users (first_name, last_name, password) VALUES ('firstName', 'lastName', 'boom!'), ('John', 'Doe', 'badpassword'), ('Jane', 'Doe', 'foundrydc')");
+        });
+
+        it('Should generate an INSERT statement to handle ignoring duplicate keys', function() {
+
+            const sql = mysqlDaoQueryHelper.createBulk([
+                {firstName: 'firstName', lastName: 'lastName', password: 'boom!'},
+                {firstName: 'John', lastName: 'Doe', password: 'badpassword'},
+                {firstName: 'Jane', lastName: 'Doe', password: 'foundrydc'}
+            ], {ignoreOnDuplicateKey: true});
+            Should.exist(sql);
+
+            sql.should.eql("INSERT INTO users (first_name, last_name, password) VALUES ('firstName', 'lastName', 'boom!'), ('John', 'Doe', 'badpassword'), ('Jane', 'Doe', 'foundrydc') ON DUPLICATE KEY UPDATE first_name = first_name");
         });
 
     });
