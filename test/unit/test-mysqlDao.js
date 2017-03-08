@@ -197,7 +197,7 @@ describe('MysqlDao', function() {
 
                 return userDao.create(
                     {firstName: 'Ignore', lastName: 'Me', email: 'existing@email.com'},
-                    true
+                    {ignoreOnDuplicateKey: true}
                 ).then(id => {
 
                     Should.exist(id);
@@ -275,7 +275,7 @@ describe('MysqlDao', function() {
                         {firstName: 'Ignore', lastName: 'Me', email: 'existing@email.com'},
                         {firstName: 'Jane', lastName: 'Doe', email: 'jane.doe@gmail.com'},
                         {firstName: 'Also', lastName: 'Ignore', email: 'existing@email.com'},
-                    ], true
+                    ], {ignoreOnDuplicateKey: true}
                 ).then(numRows => {
                     Should.exist(numRows);
                     numRows.should.eql(4);
