@@ -109,7 +109,7 @@ function databaseSetup(done) {
                     id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
                     first_name VARCHAR(100) NULL,
                     last_name VARCHAR(100) NULL,
-                    email VARCHAR(255) NOT NULL,
+                    email VARCHAR(255) NOT NULL UNIQUE,
                     date_created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
                 );
         `,
@@ -185,6 +185,32 @@ describe('MysqlDao', function() {
                         });
                     return Promise.all([checkRowPromise]);
                 });
+        });
+
+        it('Should respect duplicate ignore option', () => {
+            return mysqlService.insert(
+                `INSERT INTO users (first_name, last_name, email) ` +
+                `VALUES ('Already','Here','existing@email.com')`
+            ).then(insertResult => {
+
+                return userDao.create(
+                    new UserCreateArgs({firstName: 'Ignore', lastName: 'Me', email: 'existing@email.com'}),
+                    true
+                ).then(id => {
+
+                        Should.exist(id);
+                        id.should.be.a.Number();
+
+                        const checkRowPromise = mysqlService.selectOne(`SELECT * FROM users WHERE email = 'existing@email.com'`)
+                            .then(dbRow => {
+                                Should.exist(dbRow);
+                                dbRow.first_name.should.eql('Already');
+                                dbRow.last_name.should.eql('Here');
+                                dbRow.email.should.eql('existing@email.com');
+                            });
+                        return Promise.all([checkRowPromise]);
+                    })
+            });
         });
 
     });
