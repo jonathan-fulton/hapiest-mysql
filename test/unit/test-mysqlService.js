@@ -547,7 +547,7 @@ describe('MysqlService', function() {
 
         it('Should error on invalid read connection', function() {
             const invalidReadConnectionConfig = {
-                host: ['localhost','invalid'],
+                host: ['localhost','doesnotexist'],
                 database: 'hapiestmysql',
                 user: 'hapiestmysql',
                 password: 'hapiestmysql',
