@@ -547,7 +547,7 @@ describe('MysqlService', function() {
 
         it('Should error on invalid read connection', function() {
             const invalidReadConnectionConfig = {
-                host: ['localhost','doesnotexist'],
+                host: ['localhost','invalid'],
                 database: 'hapiestmysql',
                 user: 'hapiestmysql',
                 password: 'hapiestmysql',
@@ -570,6 +570,16 @@ describe('MysqlService', function() {
                     mysqlService._readPools.forEach(pool => pool._closed.should.be.true);
                 });
         })
-    })
+    });
+
+    describe('resetPools', function() {
+        it('Should reset the available pools based on write and read configurations', function() {
+            return mysqlService.resetPools()
+                .then(() => {
+                    mysqlService._writePool._closed.should.be.true;
+                    mysqlService._readPools.forEach(pool => pool._closed.should.be.true);
+                });
+        });
+    });
 
 })
