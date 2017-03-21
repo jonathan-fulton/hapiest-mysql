@@ -566,10 +566,20 @@ describe('MysqlService', function() {
         it('Should end all connection pools', function() {
             return mysqlService.endPools()
                 .then(() => {
-                    mysqlService._writePool._closed.should.be.true;
-                    mysqlService._readPools.forEach(pool => pool._closed.should.be.true);
+                    (mysqlService._writePool._closed).should.equal(true);
+                    mysqlService._readPools.forEach(pool => (pool._closed).should.equal(true));
                 });
         })
-    })
+    });
+
+    describe('resetPools', function() {
+        it('Should reset the available pools based on write and read configurations', function() {
+            return mysqlService.resetPools()
+                .then(() => {
+                    (mysqlService._writePool._closed).should.equal(false);
+                    mysqlService._readPools.forEach(pool => (pool._closed).should.equal(false));
+                });
+        });
+    });
 
 })
