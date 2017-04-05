@@ -1898,4 +1898,126 @@ describe('MysqlDao', function() {
         });
     });
 
+    describe('join', function() {
+
+        before(done => {
+            databaseSetup(err => {
+                if (err) return done(err);
+
+                const dummyUsers = [
+                    {id: 1, firstName: 'John', lastName: 'Doe', email: 'john.doe@gmail.com'},
+                    {id: 2, firstName: 'Jane', lastName: 'Doe', email: 'jane.doe@gmail.com'},
+                    {id: 3, firstName: 'James', lastName: 'Bond', email: 'lax4life-007@gmail.com'}
+                ];
+
+                const dummyTopSecretInfo = [
+                    {secretAgentCode: 1, handlerCode: null, intel: "It's gonna rain."},
+                    {secretAgentCode: 1, handlerCode: null, intel: "The sky is blue."},
+                    {secretAgentCode: 99, handlerCode: 2, intel: "Hello world."}
+                ];
+
+                // Create 500 pieces of high quality intel for James Bond.
+                _.range(500).reverse().map(i => dummyTopSecretInfo.push(
+                    {secretAgentCode: 3, handlerCode: null, intel: `${i} shaken-not-stirred martinis on the wall, ${i} shaken-not-stirred martinis...`}
+                ));
+
+                return Promise.all([
+                    userDao.createBulk(dummyUsers),
+                    topSecretInfoDao.createBulk(dummyTopSecretInfo)
+                ])
+                    .then(() => done())
+                    .catch(done)
+
+            })
+        });
+
+        it('Should join all relevant target entities to an array of source entities', function() {
+
+            return userDao.getAll({})
+                .then(users => {
+                    return topSecretInfoDao.join(users, 'secretAgentCode')
+                })
+                .then(users => {
+                    Should.exist(users);
+                    users.should.have.lengthOf(3);
+                    users[0].should.have.property('id', 1);
+                    users[0].should.have.property('topSecretInfo');
+                    users[0].topSecretInfo.should.have.lengthOf(2);
+                    users[0].topSecretInfo[0].should.have.property('secretAgentCode', 1);
+                    users[0].topSecretInfo[0].should.have.property('intel', "It's gonna rain.");
+                    users[0].topSecretInfo[1].should.have.property('intel', "The sky is blue.");
+
+                    users[1].should.have.property('id', 2);
+                    users[1].should.have.property('topSecretInfo');
+                    users[1].topSecretInfo.should.have.lengthOf(0);
+
+                    users[2].should.have.property('id', 3);
+                    users[2].should.have.property('topSecretInfo');
+                    users[2].topSecretInfo.should.have.lengthOf(500);
+                })
+        });
+
+        it('Should join target entities to a single source entity', function() {
+            return userDao.getOneById(1)
+                .then(user => {
+                    return topSecretInfoDao.join(user, 'secretAgentCode')
+                })
+                .then(user => {
+                    Should.exist(user);
+                    user.should.have.property('id', 1);
+                    user.should.have.property('topSecretInfo');
+                    user.topSecretInfo.should.have.lengthOf(2);
+                })
+        });
+
+        it('Should join target entities using a different target join key and joined entities key name', function() {
+            return userDao.getAll({})
+                .then(users => {
+                    return topSecretInfoDao.join(users, 'handlerCode', {joinKey: 'id', resultsKey: 'other_joined_entities_key_name'})
+                })
+                .then(users => {
+                    Should.exist(users);
+                    users.should.have.lengthOf(3);
+
+                    users[0].should.have.property('id', 1);
+                    users[0].should.have.property('other_joined_entities_key_name');
+                    users[0].other_joined_entities_key_name.should.have.lengthOf(0);
+
+                    users[1].should.have.property('id', 2);
+                    users[1].should.have.property('other_joined_entities_key_name');
+                    users[1].other_joined_entities_key_name.should.have.lengthOf(1);
+                    users[1].other_joined_entities_key_name[0].should.have.property('intel', "Hello world.");
+                })
+        });
+
+        it('Should join handle an empty input array ', function() {
+            return topSecretInfoDao.join([], 'secretAgentCode')
+                .then(results => {
+                    Should.deepEqual([], results);
+                })
+        });
+
+        it('Should join handle an undefined input ', function() {
+            return topSecretInfoDao.join(null, 'secretAgentCode')
+                .then(results => {
+                    Should.not.exist(results);
+                })
+        });
+
+        it('Should join in batches', function() {
+            return userDao.getOneById(3)
+                .then(user => {
+                    return topSecretInfoDao.batchJoin(user, 'secretAgentCode', 5);
+                })
+                .then(user => {
+                    Should.exist(user);
+                    user.should.have.property('id', 3);
+                    user.should.have.property('topSecretInfo');
+                    user.topSecretInfo.should.have.lengthOf(500);
+                    user.topSecretInfo[0].intel.should.match(/499 shaken-not-stirred martinis on the wall/);
+                })
+        });
+
+    });
+
 });
