@@ -1935,7 +1935,7 @@ describe('MysqlDao', function() {
 
             return userDao.getAll({})
                 .then(users => {
-                    return topSecretInfoDao.leftJoin(users, 'secretAgentCode')
+                    return topSecretInfoDao.join(users, 'secretAgentCode')
                 })
                 .then(users => {
                     Should.exist(users);
@@ -1960,7 +1960,7 @@ describe('MysqlDao', function() {
         it('Should join target entities to a single source entity', function() {
             return userDao.getOneById(1)
                 .then(user => {
-                    return topSecretInfoDao.leftJoin(user, 'secretAgentCode')
+                    return topSecretInfoDao.join(user, 'secretAgentCode')
                 })
                 .then(user => {
                     Should.exist(user);
@@ -1973,7 +1973,7 @@ describe('MysqlDao', function() {
         it('Should join target entities using a different target join key and joined entities key name', function() {
             return userDao.getAll({})
                 .then(users => {
-                    return topSecretInfoDao.leftJoin(users, 'handlerCode', {joinKey: 'id', resultsKey: 'other_joined_entities_key_name'})
+                    return topSecretInfoDao.join(users, 'handlerCode', {joinKey: 'id', resultsKey: 'other_joined_entities_key_name'})
                 })
                 .then(users => {
                     Should.exist(users);
@@ -1990,10 +1990,24 @@ describe('MysqlDao', function() {
                 })
         });
 
+        it('Should join handle an empty input array ', function() {
+            return topSecretInfoDao.join([], 'secretAgentCode')
+                .then(results => {
+                    Should.deepEqual([], results);
+                })
+        });
+
+        it('Should join handle an undefined input ', function() {
+            return topSecretInfoDao.join(null, 'secretAgentCode')
+                .then(results => {
+                    Should.not.exist(results);
+                })
+        });
+
         it('Should join in batches', function() {
             return userDao.getOneById(3)
                 .then(user => {
-                    return topSecretInfoDao.batchLeftJoin(user, 'secretAgentCode', 5);
+                    return topSecretInfoDao.batchJoin(user, 'secretAgentCode', 5);
                 })
                 .then(user => {
                     Should.exist(user);
