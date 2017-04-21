@@ -584,7 +584,7 @@ describe('MysqlDaoQueryHelper', function() {
                 dateAgain: 'NOW()',
                 someNullField: 'IS NULL',
                 nonNullField: 'IS NOT NULL'
-            }, {dontCleanMysqlFunctions: false});
+            }, false);
             Should.exist(output);
             output.should.have.properties(['first_name','date_created']);
             output.first_name.should.eql("'firstName'");
