@@ -235,6 +235,27 @@ describe('MysqlDaoQueryHelper', function() {
             sql.should.eql("SELECT * FROM users WHERE (id IN (1,2,5,10))");
         });
 
+        it('Should generate a SELECT statement with a query object and in operator', function() {
+            const sql = mysqlDaoQueryHelper.getAll({id: { in: [1,2,3] }});
+            Should.exist(sql);
+
+            sql.should.eql('SELECT * FROM users WHERE (id IN (1,2,3))');
+        });
+
+        it('Should generate a SELECT statement with a query object and nin operator', function() {
+            const sql = mysqlDaoQueryHelper.getAll({id: { nin: ['apple', 'banana', 'pear'] }});
+            Should.exist(sql);
+
+            sql.should.eql('SELECT * FROM users WHERE (id NOT IN (\'apple\',\'banana\',\'pear\'))');
+        });
+
+        it('Should generate a SELECT statement with a query object and in/nin operators', function() {
+            const sql = mysqlDaoQueryHelper.getAll({id: { in: [7,8,9], nin: [1,2,3] }});
+            Should.exist(sql);
+
+            sql.should.eql('SELECT * FROM users WHERE (id IN (7,8,9) AND id NOT IN (1,2,3))');
+        });
+
         it('Should generate a SELECT statement with order by', function() {
             const sql = mysqlDaoQueryHelper.getAll({}, { sort: { firstName: 'ASC', lastName: 'DESC' } });
             Should.exist(sql);
@@ -294,11 +315,14 @@ describe('MysqlDaoQueryHelper', function() {
                 dateAdded: {
                     gt: new Date('1990-01-05T13:30:00Z'),
                     lte: new Date('1990-01-10T13:30:00Z')
+                },
+                luckyNumbers: {
+                    in: [9,17,42]
                 }
             });
             Should.exist(sql);
 
-            sql.should.eql("SELECT * FROM users WHERE (name = 'Chas') AND (last_name != 'Fantastic') AND (id > 2) AND (date_added > '1990-01-05 13:30:00.000' AND date_added <= '1990-01-10 13:30:00.000')");
+            sql.should.eql("SELECT * FROM users WHERE (name = 'Chas') AND (last_name != 'Fantastic') AND (id > 2) AND (date_added > '1990-01-05 13:30:00.000' AND date_added <= '1990-01-10 13:30:00.000') AND (lucky_numbers IN (9,17,42))");
         });
 
     });
@@ -656,4 +680,15 @@ describe('MysqlDaoQueryHelper', function() {
 
     });
 
+    describe('_cleanValueForOperator', function() {
+        it('Should clean array values for in and in operators', function() {
+            const cleanedValue = MysqlDaoQueryHelper._cleanValueForOperator('in', ['\'a\'','\'b\'','\'c\'']);
+            cleanedValue.should.eql('(\'a\',\'b\',\'c\')');
+        });
+
+        it('Should pass the value for other operators through unchanged', function() {
+            const cleanedValue = MysqlDaoQueryHelper._cleanValueForOperator('gte', 5);
+            cleanedValue.should.eql(5);
+        })
+    });
 });
