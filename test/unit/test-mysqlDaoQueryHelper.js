@@ -246,7 +246,14 @@ describe('MysqlDaoQueryHelper', function() {
             const sql = mysqlDaoQueryHelper.getAll({id: { nin: ['apple', 'banana', 'pear'] }});
             Should.exist(sql);
 
-            sql.should.eql('SELECT * FROM users WHERE (id NOT IN (\'apple\',\'banana\',\'pear\'))');
+            sql.should.eql("SELECT * FROM users WHERE (id NOT IN ('apple','banana','pear'))");
+        });
+
+        it('Should generate a SELECT statement with a query object and notIn operator', function() {
+            const sql = mysqlDaoQueryHelper.getAll({id: { not_in: ['apple', 'banana', 'pear'] }});
+            Should.exist(sql);
+
+            sql.should.eql("SELECT * FROM users WHERE (id NOT IN ('apple','banana','pear'))");
         });
 
         it('Should generate a SELECT statement with a query object and in/nin operators', function() {
