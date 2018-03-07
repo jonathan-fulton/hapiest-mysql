@@ -308,6 +308,17 @@ describe('MysqlDaoQueryHelper', function() {
             sql.should.eql("SELECT * FROM users WHERE (id >= 5 AND id <= 10)");
         });
 
+        it('Should generate a SELECT statement with a query object and ne: null', function() {
+            const sql = mysqlDaoQueryHelper.getAll({
+                id: {
+                    ne: null
+                }
+            });
+            Should.exist(sql);
+
+            sql.should.eql("SELECT * FROM users WHERE (id IS NOT NULL)");
+        });
+
         it('Should generate a SELECT statement with multiple query objects', function() {
             const sql = mysqlDaoQueryHelper.getAll({
                 name: {
@@ -689,12 +700,12 @@ describe('MysqlDaoQueryHelper', function() {
 
     describe('_cleanValueForOperator', function() {
         it('Should clean array values for in and in operators', function() {
-            const cleanedValue = MysqlDaoQueryHelper._cleanValueForOperator('in', ['\'a\'','\'b\'','\'c\'']);
+            const cleanedValue = mysqlDaoQueryHelper._cleanValueForOperator('in', ['\'a\'','\'b\'','\'c\'']);
             cleanedValue.should.eql('(\'a\',\'b\',\'c\')');
         });
 
         it('Should pass the value for other operators through unchanged', function() {
-            const cleanedValue = MysqlDaoQueryHelper._cleanValueForOperator('gte', 5);
+            const cleanedValue = mysqlDaoQueryHelper._cleanValueForOperator('gte', 5);
             cleanedValue.should.eql(5);
         })
     });
