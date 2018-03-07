@@ -709,4 +709,11 @@ describe('MysqlDaoQueryHelper', function() {
             cleanedValue.should.eql(5);
         })
     });
+
+    describe('_cleanQueryOperator', function() {
+        it('Should clean array values for in and in operators', function() {
+            const cleanedValue = mysqlDaoQueryHelper._cleanQueryOperator('ne', 'NULL');
+            cleanedValue.should.eql('IS NOT');
+        });
+    });
 });
