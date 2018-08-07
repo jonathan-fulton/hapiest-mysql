@@ -2018,6 +2018,27 @@ describe('MysqlDao', function() {
                 })
         });
 
+
+        it('Should join in the opposite direction', function() {
+
+            return topSecretInfoDao.getAll({secretAgentCode: 1})
+                .then(topSecretInfos => {
+                    return userDao.join(topSecretInfos, 'id', {joinKey: 'secretAgentCode', resultsKey: 'agents'});
+                })
+                .then(topSecretInfos => {
+                    Should.exist(topSecretInfos);
+                    topSecretInfos.should.have.lengthOf(2);
+                    topSecretInfos[0].should.have.property('agents');
+                    topSecretInfos[0].agents.should.have.lengthOf(1);
+                    topSecretInfos[0].agents[0].should.have.property('id', 1);
+
+                    topSecretInfos[1].should.have.property('id', 2);
+                    topSecretInfos[1].should.have.property('agents');
+                    topSecretInfos[1].agents.should.have.lengthOf(1);
+                })
+        });
+
+
     });
 
 });
