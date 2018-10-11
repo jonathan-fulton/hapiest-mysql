@@ -343,6 +343,17 @@ describe('MysqlDaoQueryHelper', function() {
             sql.should.eql("SELECT * FROM users WHERE (name = 'Chas') AND (last_name != 'Fantastic') AND (id > 2) AND (date_added > '1990-01-05 13:30:00.000' AND date_added <= '1990-01-10 13:30:00.000') AND (lucky_numbers IN (9,17,42))");
         });
 
+      it('Should generate a SELECT statement with a query object and like: foo%', function() {
+        const sql = mysqlDaoQueryHelper.getAll({
+          firstName: {
+              like: 'foo%'
+          }
+        });
+        Should.exist(sql);
+
+        sql.should.eql("SELECT * FROM users WHERE (first_name LIKE 'foo%')");
+      });
+
     });
 
     describe('getCount', function() {
