@@ -707,6 +707,32 @@ describe('MysqlDaoQueryHelper', function() {
             sqlString.should.eql("SELECT * FROM users WHERE (date_created = CURRENT_TIMESTAMP) AND (date_updated = NOW()) AND (email IS NULL) AND (first_name IS NOT NULL)");
         });
 
+        it('Should generate good WHERE clause when input contains JSON path query', function() {
+            const sqlObj = Squel.select().from('users');
+
+            mysqlDaoQueryHelper._appendWhereClause(sqlObj, {"meta->'$.is_active'": true});
+
+            const sqlString = sqlObj.toString();
+
+            sqlString.should.eql("SELECT * FROM users WHERE (meta->'$.is_active' = true)");
+        });
+
+    });
+
+    describe('_getPropertyMappings', function() {
+        it('Should convert property keys to snake_case, but not JSON path fields', function() {
+            const mapped = MysqlDaoQueryHelper._getPropertyMappings({
+                propertyOne: 1,
+                propertyTwo: 2,
+                "meta->'$.is_active'": true
+            });
+
+            mapped.should.eql({
+                propertyOne: 'property_one',
+                propertyTwo: 'property_two',
+                "meta->'$.is_active'": "meta->'$.is_active'"
+            });
+        });
     });
 
     describe('_cleanValueForOperator', function() {
