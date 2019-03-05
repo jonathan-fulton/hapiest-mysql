@@ -171,21 +171,21 @@ describe('MysqlDaoQueryHelper', function() {
             const sql = mysqlDaoQueryHelper.getOne({firstName: 'John', lastName: 'Doe'});
             Should.exist(sql);
 
-            sql.should.eql("SELECT * FROM users WHERE (first_name = 'John') AND (last_name = 'Doe') LIMIT 1");
+            sql.should.eql("SELECT * FROM users WHERE (`first_name` = 'John') AND (`last_name` = 'Doe') LIMIT 1");
         });
 
         it('Should allow ? characters in the WHERE clause', function() {
             const sql = mysqlDaoQueryHelper.getOne({url: 'http://www.youtube.com/?q=somevideo'});
             Should.exist(sql);
 
-            sql.should.eql("SELECT * FROM users WHERE (url = 'http://www.youtube.com/?q=somevideo') LIMIT 1");
+            sql.should.eql("SELECT * FROM users WHERE (`url` = 'http://www.youtube.com/?q=somevideo') LIMIT 1");
         });
 
         it('Should generate an IS NULL in where clause ', function() {
             const sql = mysqlDaoQueryHelper.getOne({firstName: null, lastName: 'Doe'});
             Should.exist(sql);
 
-            sql.should.eql("SELECT * FROM users WHERE (first_name IS NULL) AND (last_name = 'Doe') LIMIT 1");
+            sql.should.eql("SELECT * FROM users WHERE (`first_name` IS NULL) AND (`last_name` = 'Doe') LIMIT 1");
         });
 
         it('Should generate dates with for a utc timezone ', function() {
@@ -196,7 +196,7 @@ describe('MysqlDaoQueryHelper', function() {
             const sql = mysqlDaoQueryHelper.getOne({dateAdded: nowDate});
             Should.exist(sql);
 
-            sql.should.eql(`SELECT * FROM users WHERE (date_added = '${utcDateString}') LIMIT 1`);
+            sql.should.eql(`SELECT * FROM users WHERE (\`date_added\` = '${utcDateString}') LIMIT 1`);
         });
 
         it('Should generate dates with for local timezone ', function() {
@@ -207,7 +207,7 @@ describe('MysqlDaoQueryHelper', function() {
             const sql = localMysqlDaoQueryHelper.getOne({dateAdded: nowDate});
             Should.exist(sql);
 
-            sql.should.eql(`SELECT * FROM users WHERE (date_added = '${localDateString}') LIMIT 1`);
+            sql.should.eql(`SELECT * FROM users WHERE (\`date_added\` = '${localDateString}') LIMIT 1`);
         });
 
     });
@@ -218,56 +218,56 @@ describe('MysqlDaoQueryHelper', function() {
             const sql = mysqlDaoQueryHelper.getAll({lastName: 'Doe'});
             Should.exist(sql);
 
-            sql.should.eql("SELECT * FROM users WHERE (last_name = 'Doe')");
+            sql.should.eql("SELECT * FROM users WHERE (`last_name` = 'Doe')");
         });
 
         it('Should allow ? characters in the WHERE clause', function() {
             const sql = mysqlDaoQueryHelper.getAll({url: 'http://www.youtube.com/?q=somevideo'});
             Should.exist(sql);
 
-            sql.should.eql("SELECT * FROM users WHERE (url = 'http://www.youtube.com/?q=somevideo')");
+            sql.should.eql("SELECT * FROM users WHERE (`url` = 'http://www.youtube.com/?q=somevideo')");
         });
 
         it('Should allow an array to be passed to WHERE clause', function() {
             const sql = mysqlDaoQueryHelper.getAll({id: [1,2,5,10]});
             Should.exist(sql);
 
-            sql.should.eql("SELECT * FROM users WHERE (id IN (1,2,5,10))");
+            sql.should.eql("SELECT * FROM users WHERE (`id` IN (1,2,5,10))");
         });
 
         it('Should generate a SELECT statement with a query object and in operator', function() {
             const sql = mysqlDaoQueryHelper.getAll({id: { in: [1,2,3] }});
             Should.exist(sql);
 
-            sql.should.eql('SELECT * FROM users WHERE (id IN (1,2,3))');
+            sql.should.eql('SELECT * FROM users WHERE (`id` IN (1,2,3))');
         });
 
         it('Should generate a SELECT statement with a query object and nin operator', function() {
             const sql = mysqlDaoQueryHelper.getAll({id: { nin: ['apple', 'banana', 'pear'] }});
             Should.exist(sql);
 
-            sql.should.eql("SELECT * FROM users WHERE (id NOT IN ('apple','banana','pear'))");
+            sql.should.eql("SELECT * FROM users WHERE (`id` NOT IN ('apple','banana','pear'))");
         });
 
         it('Should generate a SELECT statement with a query object and notIn operator', function() {
             const sql = mysqlDaoQueryHelper.getAll({id: { not_in: ['apple', 'banana', 'pear'] }});
             Should.exist(sql);
 
-            sql.should.eql("SELECT * FROM users WHERE (id NOT IN ('apple','banana','pear'))");
+            sql.should.eql("SELECT * FROM users WHERE (`id` NOT IN ('apple','banana','pear'))");
         });
 
         it('Should generate a SELECT statement with a query object and in/nin operators', function() {
             const sql = mysqlDaoQueryHelper.getAll({id: { in: [7,8,9], nin: [1,2,3] }});
             Should.exist(sql);
 
-            sql.should.eql('SELECT * FROM users WHERE (id IN (7,8,9) AND id NOT IN (1,2,3))');
+            sql.should.eql('SELECT * FROM users WHERE (`id` IN (7,8,9) AND `id` NOT IN (1,2,3))');
         });
 
         it('Should generate a SELECT statement with order by', function() {
             const sql = mysqlDaoQueryHelper.getAll({}, { sort: { firstName: 'ASC', lastName: 'DESC' } });
             Should.exist(sql);
 
-            sql.should.eql("SELECT * FROM users ORDER BY first_name ASC, last_name DESC");
+            sql.should.eql("SELECT * FROM users ORDER BY `first_name` ASC, `last_name` DESC");
         });
 
         it('Should generate a SELECT statement with limit', function() {
@@ -293,7 +293,7 @@ describe('MysqlDaoQueryHelper', function() {
             });
             Should.exist(sql);
 
-            sql.should.eql("SELECT * FROM users WHERE (date_added >= '1990-01-05 13:30:00.000' AND date_added < '1990-01-10 13:30:00.000')");
+            sql.should.eql("SELECT * FROM users WHERE (`date_added` >= '1990-01-05 13:30:00.000' AND `date_added` < '1990-01-10 13:30:00.000')");
         });
 
         it('Should generate a SELECT statement with a query object and gte/lte', function() {
@@ -305,7 +305,7 @@ describe('MysqlDaoQueryHelper', function() {
             });
             Should.exist(sql);
 
-            sql.should.eql("SELECT * FROM users WHERE (id >= 5 AND id <= 10)");
+            sql.should.eql("SELECT * FROM users WHERE (`id` >= 5 AND `id` <= 10)");
         });
 
         it('Should generate a SELECT statement with a query object and ne: null', function() {
@@ -316,7 +316,7 @@ describe('MysqlDaoQueryHelper', function() {
             });
             Should.exist(sql);
 
-            sql.should.eql("SELECT * FROM users WHERE (id IS NOT NULL)");
+            sql.should.eql("SELECT * FROM users WHERE (`id` IS NOT NULL)");
         });
 
         it('Should generate a SELECT statement with multiple query objects', function() {
@@ -340,7 +340,7 @@ describe('MysqlDaoQueryHelper', function() {
             });
             Should.exist(sql);
 
-            sql.should.eql("SELECT * FROM users WHERE (name = 'Chas') AND (last_name != 'Fantastic') AND (id > 2) AND (date_added > '1990-01-05 13:30:00.000' AND date_added <= '1990-01-10 13:30:00.000') AND (lucky_numbers IN (9,17,42))");
+            sql.should.eql("SELECT * FROM users WHERE (`name` = 'Chas') AND (`last_name` != 'Fantastic') AND (`id` > 2) AND (`date_added` > '1990-01-05 13:30:00.000' AND `date_added` <= '1990-01-10 13:30:00.000') AND (`lucky_numbers` IN (9,17,42))");
         });
 
       it('Should generate a SELECT statement with a query object and like: foo%', function() {
@@ -351,7 +351,7 @@ describe('MysqlDaoQueryHelper', function() {
         });
         Should.exist(sql);
 
-        sql.should.eql("SELECT * FROM users WHERE (first_name LIKE 'foo%')");
+        sql.should.eql("SELECT * FROM users WHERE (`first_name` LIKE 'foo%')");
       });
 
     });
@@ -361,21 +361,21 @@ describe('MysqlDaoQueryHelper', function() {
             const sql = mysqlDaoQueryHelper.getCount({lastName: 'Doe'});
             Should.exist(sql);
 
-            sql.should.eql("SELECT COUNT(*) AS \"count\" FROM users WHERE (last_name = 'Doe')");
+            sql.should.eql("SELECT COUNT(*) AS \"count\" FROM users WHERE (`last_name` = 'Doe')");
         });
 
         it('Should generate a SELECT count(*) statement with limit', function() {
             const sql = mysqlDaoQueryHelper.getCount({lastName: 'Doe'}, { limit: 2 });
             Should.exist(sql);
 
-            sql.should.eql("SELECT COUNT(*) AS \"count\" FROM users WHERE (last_name = 'Doe')");
+            sql.should.eql("SELECT COUNT(*) AS \"count\" FROM users WHERE (`last_name` = 'Doe')");
         });
 
         it('Should generate a SELECT count(*) statement with limit and offset', function() {
             const sql = mysqlDaoQueryHelper.getCount({lastName: 'Doe'}, { offset: 1, limit: 2 });
             Should.exist(sql);
 
-            sql.should.eql("SELECT COUNT(*) AS \"count\" FROM users WHERE (last_name = 'Doe')");
+            sql.should.eql("SELECT COUNT(*) AS \"count\" FROM users WHERE (`last_name` = 'Doe')");
         });
     });
 
@@ -385,21 +385,21 @@ describe('MysqlDaoQueryHelper', function() {
             const sql = mysqlDaoQueryHelper.updateOne({id: 1}, {email: 'john.doe@gmail.com', firstName: 'john'});
             Should.exist(sql);
 
-            sql.should.eql("UPDATE users SET `email` = 'john.doe@gmail.com', `first_name` = 'john' WHERE (id = 1) LIMIT 1");
+            sql.should.eql("UPDATE users SET `email` = 'john.doe@gmail.com', `first_name` = 'john' WHERE (`id` = 1) LIMIT 1");
         });
 
         it('Should generate an UPDATE statement and not escape CURRENT_TIMESTAMP', function() {
             const sql = mysqlDaoQueryHelper.updateOne({id: 1}, {email: 'john.doe@gmail.com', dateDeleted: 'CURRENT_TIMESTAMP'});
             Should.exist(sql);
 
-            sql.should.eql("UPDATE users SET `email` = 'john.doe@gmail.com', `date_deleted` = CURRENT_TIMESTAMP WHERE (id = 1) LIMIT 1");
+            sql.should.eql("UPDATE users SET `email` = 'john.doe@gmail.com', `date_deleted` = CURRENT_TIMESTAMP WHERE (`id` = 1) LIMIT 1");
         });
 
         it('Should work even with ? in WHERE clause for one row', function() {
             const sql = mysqlDaoQueryHelper.updateOne({url: 'http://some.com/?blah=hello'}, {email: 'john.doe@gmail.com', firstName: 'john'});
             Should.exist(sql);
 
-            sql.should.eql("UPDATE users SET `email` = 'john.doe@gmail.com', `first_name` = 'john' WHERE (url = 'http://some.com/?blah=hello') LIMIT 1");
+            sql.should.eql("UPDATE users SET `email` = 'john.doe@gmail.com', `first_name` = 'john' WHERE (`url` = 'http://some.com/?blah=hello') LIMIT 1");
         });
 
     });
@@ -410,7 +410,7 @@ describe('MysqlDaoQueryHelper', function() {
             const sql = mysqlDaoQueryHelper.update({id: 1}, {email: 'john.doe@gmail.com', firstName: 'john', dateUpdated: new Date('2016-09-27T11:30:00Z')});
             Should.exist(sql);
 
-            sql.should.eql("UPDATE users SET `email` = 'john.doe@gmail.com', `first_name` = 'john', `date_updated` = '2016-09-27 11:30:00.000' WHERE (id = 1)");
+            sql.should.eql("UPDATE users SET `email` = 'john.doe@gmail.com', `first_name` = 'john', `date_updated` = '2016-09-27 11:30:00.000' WHERE (`id` = 1)");
         })
 
     });
@@ -421,14 +421,14 @@ describe('MysqlDaoQueryHelper', function() {
             const sql = mysqlDaoQueryHelper.deleteOne({id: 1});
             Should.exist(sql);
 
-            sql.should.eql("DELETE FROM users WHERE (id = 1) LIMIT 1");
+            sql.should.eql("DELETE FROM users WHERE (`id` = 1) LIMIT 1");
         });
 
         it('Should generate an DELETE statement even with ? in WHERE clause for one row', function() {
             const sql = mysqlDaoQueryHelper.deleteOne({url: 'http://some.com/?foo=bar'});
             Should.exist(sql);
 
-            sql.should.eql("DELETE FROM users WHERE (url = 'http://some.com/?foo=bar') LIMIT 1");
+            sql.should.eql("DELETE FROM users WHERE (`url` = 'http://some.com/?foo=bar') LIMIT 1");
         });
 
     });
@@ -439,7 +439,7 @@ describe('MysqlDaoQueryHelper', function() {
             const sql = mysqlDaoQueryHelper.delete({age: 30});
             Should.exist(sql);
 
-            sql.should.eql("DELETE FROM users WHERE (age = 30)");
+            sql.should.eql("DELETE FROM users WHERE (`age` = 30)");
         })
 
     });
@@ -672,7 +672,7 @@ describe('MysqlDaoQueryHelper', function() {
 
             const sqlString = sqlObj.toString();
 
-            sqlString.should.eql("SELECT * FROM users WHERE (first_name = 'John') AND (last_name = 'Doe')");
+            sqlString.should.eql("SELECT * FROM users WHERE (`first_name` = 'John') AND (`last_name` = 'Doe')");
         });
 
         it('Should generate good WHERE clause when input contains NULL value', function() {
@@ -682,7 +682,7 @@ describe('MysqlDaoQueryHelper', function() {
 
             const sqlString = sqlObj.toString();
 
-            sqlString.should.eql("SELECT * FROM users WHERE (first_name = 'John') AND (last_name IS NULL)");
+            sqlString.should.eql("SELECT * FROM users WHERE (`first_name` = 'John') AND (`last_name` IS NULL)");
         });
 
         it('Should generate good WHERE clause when input contains undefined value (assumes it means NULL)', function() {
@@ -693,7 +693,7 @@ describe('MysqlDaoQueryHelper', function() {
 
             const sqlString = sqlObj.toString();
 
-            sqlString.should.eql("SELECT * FROM users WHERE (first_name = 'John') AND (last_name IS NULL)");
+            sqlString.should.eql("SELECT * FROM users WHERE (`first_name` = 'John') AND (`last_name` IS NULL)");
         });
 
         it('Should generate good WHERE clause when input contains special functions', function() {
@@ -704,7 +704,7 @@ describe('MysqlDaoQueryHelper', function() {
 
             const sqlString = sqlObj.toString();
 
-            sqlString.should.eql("SELECT * FROM users WHERE (date_created = CURRENT_TIMESTAMP) AND (date_updated = NOW()) AND (email IS NULL) AND (first_name IS NOT NULL)");
+            sqlString.should.eql("SELECT * FROM users WHERE (`date_created` = CURRENT_TIMESTAMP) AND (`date_updated` = NOW()) AND (`email` IS NULL) AND (`first_name` IS NOT NULL)");
         });
 
         it('Should generate good WHERE clause when input contains JSON path query', function() {
