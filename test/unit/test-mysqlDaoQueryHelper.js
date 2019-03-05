@@ -33,14 +33,14 @@ describe('MysqlDaoQueryHelper', function() {
             const sql = mysqlDaoQueryHelper.create({firstName: 'firstName', lastName: 'lastName', password: 'boom!', dateAdded: new Date('1990-01-05T13:30:00Z')});
             Should.exist(sql);
 
-            sql.should.eql(`INSERT INTO users (first_name, last_name, password, date_added) VALUES ('firstName', 'lastName', 'boom!', '1990-01-05 13:30:00.000')`);
+            sql.should.eql("INSERT INTO users (`first_name`, `last_name`, `password`, `date_added`) VALUES ('firstName', 'lastName', 'boom!', '1990-01-05 13:30:00.000')");
         });
 
         it('Should generate an INSERT statement for a single entry in users table from a VO', function() {
             const sql = mysqlDaoQueryHelper.create(new UserCreateArgs({firstName: 'firstName', lastName: 'lastName', password: 'boom!'}));
             Should.exist(sql);
 
-            sql.should.eql(`INSERT INTO users (first_name, last_name, password) VALUES ('firstName', 'lastName', 'boom!')`);
+            sql.should.eql("INSERT INTO users (`first_name`, `last_name`, `password`) VALUES ('firstName', 'lastName', 'boom!')");
         });
 
         it('Should generate an INSERT statement for a single entry in users table from an object with toJsObj() function defined', function() {
@@ -52,7 +52,7 @@ describe('MysqlDaoQueryHelper', function() {
             const sql = mysqlDaoQueryHelper.create(obj);
             Should.exist(sql);
 
-            sql.should.eql(`INSERT INTO users (first_name, last_name, password) VALUES ('firstName', 'lastName', 'boom!')`);
+            sql.should.eql("INSERT INTO users (`first_name`, `last_name`, `password`) VALUES ('firstName', 'lastName', 'boom!')");
         });
 
         it('Should generate an INSERT statement for a single entry in users table from an object with toJSON() function defined', function() {
@@ -64,14 +64,14 @@ describe('MysqlDaoQueryHelper', function() {
             const sql = mysqlDaoQueryHelper.create(obj);
             Should.exist(sql);
 
-            sql.should.eql(`INSERT INTO users (first_name, last_name, password) VALUES ('Bob', 'Smith', 'another password')`);
+            sql.should.eql("INSERT INTO users (`first_name`, `last_name`, `password`) VALUES ('Bob', 'Smith', 'another password')");
         });
 
         it('Should generate an INSERT statement for a single entry in users table with raw inputs', function() {
             const sql = mysqlDaoQueryHelper.create({firstName: 'firstName', lastName: 'lastName', password: { raw: 'TRIM("   mybadpasswordinput    ")' }, dateAdded: new Date('1990-01-05T13:30:00Z')});
             Should.exist(sql);
 
-            sql.should.eql(`INSERT INTO users (first_name, last_name, password, date_added) VALUES ('firstName', 'lastName', TRIM("   mybadpasswordinput    "), '1990-01-05 13:30:00.000')`);
+            sql.should.eql(`INSERT INTO users (\`first_name\`, \`last_name\`, \`password\`, \`date_added\`) VALUES ('firstName', 'lastName', TRIM("   mybadpasswordinput    "), '1990-01-05 13:30:00.000')`);
         });
 
         it('Should generate an INSERT statement to handle ignoring duplicate keys', function() {
@@ -83,7 +83,7 @@ describe('MysqlDaoQueryHelper', function() {
             }, {ignoreOnDuplicateKey: true});
 
             Should.exist(sql);
-            sql.should.eql(`INSERT INTO users (first_name, last_name, password, date_added) VALUES ('firstName', 'lastName', TRIM("   mybadpasswordinput    "), '1990-01-05 13:30:00.000') ON DUPLICATE KEY UPDATE first_name = first_name`);
+            sql.should.eql(`INSERT INTO users (\`first_name\`, \`last_name\`, \`password\`, \`date_added\`) VALUES ('firstName', 'lastName', TRIM("   mybadpasswordinput    "), '1990-01-05 13:30:00.000') ON DUPLICATE KEY UPDATE first_name = first_name`);
         });
 
     });
@@ -98,7 +98,7 @@ describe('MysqlDaoQueryHelper', function() {
             ]);
             Should.exist(sql);
 
-            sql.should.eql("INSERT INTO users (first_name, last_name, password) VALUES ('firstName', 'lastName', 'boom!'), ('John', 'Doe', 'badpassword'), ('Jane', 'Doe', 'foundrydc')");
+            sql.should.eql("INSERT INTO users (`first_name`, `last_name`, `password`) VALUES ('firstName', 'lastName', 'boom!'), ('John', 'Doe', 'badpassword'), ('Jane', 'Doe', 'foundrydc')");
         });
 
         it('Should generate an INSERT statement to handle ignoring duplicate keys', function() {
@@ -110,7 +110,7 @@ describe('MysqlDaoQueryHelper', function() {
             ], {ignoreOnDuplicateKey: true});
             Should.exist(sql);
 
-            sql.should.eql("INSERT INTO users (first_name, last_name, password) VALUES ('firstName', 'lastName', 'boom!'), ('John', 'Doe', 'badpassword'), ('Jane', 'Doe', 'foundrydc') ON DUPLICATE KEY UPDATE first_name = first_name");
+            sql.should.eql("INSERT INTO users (`first_name`, `last_name`, `password`) VALUES ('firstName', 'lastName', 'boom!'), ('John', 'Doe', 'badpassword'), ('Jane', 'Doe', 'foundrydc') ON DUPLICATE KEY UPDATE first_name = first_name");
         });
 
     });
@@ -120,14 +120,14 @@ describe('MysqlDaoQueryHelper', function() {
             const sql = mysqlDaoQueryHelper.upsert({firstName: 'firstName', lastName: 'lastName', password: 'boom!'}, {password: 'ka-boom!'});
             Should.exist(sql);
 
-            sql.should.eql("INSERT INTO users (first_name, last_name, password) VALUES ('firstName', 'lastName', 'boom!') ON DUPLICATE KEY UPDATE password = 'ka-boom!'");
+            sql.should.eql("INSERT INTO users (`first_name`, `last_name`, `password`) VALUES ('firstName', 'lastName', 'boom!') ON DUPLICATE KEY UPDATE password = 'ka-boom!'");
         });
 
         it('Should generate an INSERT ... ON DUPLICATE KEY UPDATE statement for raw update args', function() {
             const sql = mysqlDaoQueryHelper.upsert({firstName: 'firstName', lastName: 'lastName', password: 'boom!'}, {password: { raw: 'TRIM("   mybadpasswordinput    ")' } });
             Should.exist(sql);
 
-            sql.should.eql(`INSERT INTO users (first_name, last_name, password) VALUES ('firstName', 'lastName', 'boom!') ON DUPLICATE KEY UPDATE password = TRIM("   mybadpasswordinput    ")`);
+            sql.should.eql(`INSERT INTO users (\`first_name\`, \`last_name\`, \`password\`) VALUES ('firstName', 'lastName', 'boom!') ON DUPLICATE KEY UPDATE password = TRIM("   mybadpasswordinput    ")`);
         });
 
         it('Should generate an INSERT ... ON DUPLICATE KEY UPDATE statement for multiple rows with insert values', function() {
@@ -144,7 +144,7 @@ describe('MysqlDaoQueryHelper', function() {
             const sql = mysqlDaoQueryHelper.upsertBulk(insertArgs, updateArgs);
             Should.exist(sql);
 
-            sql.should.eql("INSERT INTO users (first_name, last_name, password) VALUES ('f1', 'l1', 'p1'), ('f2', 'l2', 'p2'), ('f3', 'l3', 'p3') ON DUPLICATE KEY UPDATE first_name = VALUES(first_name), last_name = VALUES(last_name), password = VALUES(password)");
+            sql.should.eql("INSERT INTO users (`first_name`, `last_name`, `password`) VALUES ('f1', 'l1', 'p1'), ('f2', 'l2', 'p2'), ('f3', 'l3', 'p3') ON DUPLICATE KEY UPDATE first_name = VALUES(first_name), last_name = VALUES(last_name), password = VALUES(password)");
         });
 
         it('Should generate an INSERT ... ON DUPLICATE KEY UPDATE statement for multiple rows with specific values', function() {
@@ -161,7 +161,7 @@ describe('MysqlDaoQueryHelper', function() {
             const sql = mysqlDaoQueryHelper.upsertBulk(insertArgs, updateArgs);
             Should.exist(sql);
 
-            sql.should.eql("INSERT INTO users (first_name, last_name, password) VALUES ('f1', 'l1', 'p1'), ('f2', 'l2', 'p2'), ('f3', 'l3', 'p3') ON DUPLICATE KEY UPDATE password = 'newpassword1234'");
+            sql.should.eql("INSERT INTO users (`first_name`, `last_name`, `password`) VALUES ('f1', 'l1', 'p1'), ('f2', 'l2', 'p2'), ('f3', 'l3', 'p3') ON DUPLICATE KEY UPDATE password = 'newpassword1234'");
         });
     });
 
@@ -385,21 +385,21 @@ describe('MysqlDaoQueryHelper', function() {
             const sql = mysqlDaoQueryHelper.updateOne({id: 1}, {email: 'john.doe@gmail.com', firstName: 'john'});
             Should.exist(sql);
 
-            sql.should.eql("UPDATE users SET email = 'john.doe@gmail.com', first_name = 'john' WHERE (id = 1) LIMIT 1");
+            sql.should.eql("UPDATE users SET `email` = 'john.doe@gmail.com', `first_name` = 'john' WHERE (id = 1) LIMIT 1");
         });
 
         it('Should generate an UPDATE statement and not escape CURRENT_TIMESTAMP', function() {
             const sql = mysqlDaoQueryHelper.updateOne({id: 1}, {email: 'john.doe@gmail.com', dateDeleted: 'CURRENT_TIMESTAMP'});
             Should.exist(sql);
 
-            sql.should.eql("UPDATE users SET email = 'john.doe@gmail.com', date_deleted = CURRENT_TIMESTAMP WHERE (id = 1) LIMIT 1");
+            sql.should.eql("UPDATE users SET `email` = 'john.doe@gmail.com', `date_deleted` = CURRENT_TIMESTAMP WHERE (id = 1) LIMIT 1");
         });
 
         it('Should work even with ? in WHERE clause for one row', function() {
             const sql = mysqlDaoQueryHelper.updateOne({url: 'http://some.com/?blah=hello'}, {email: 'john.doe@gmail.com', firstName: 'john'});
             Should.exist(sql);
 
-            sql.should.eql("UPDATE users SET email = 'john.doe@gmail.com', first_name = 'john' WHERE (url = 'http://some.com/?blah=hello') LIMIT 1");
+            sql.should.eql("UPDATE users SET `email` = 'john.doe@gmail.com', `first_name` = 'john' WHERE (url = 'http://some.com/?blah=hello') LIMIT 1");
         });
 
     });
@@ -410,7 +410,7 @@ describe('MysqlDaoQueryHelper', function() {
             const sql = mysqlDaoQueryHelper.update({id: 1}, {email: 'john.doe@gmail.com', firstName: 'john', dateUpdated: new Date('2016-09-27T11:30:00Z')});
             Should.exist(sql);
 
-            sql.should.eql("UPDATE users SET email = 'john.doe@gmail.com', first_name = 'john', date_updated = '2016-09-27 11:30:00.000' WHERE (id = 1)");
+            sql.should.eql("UPDATE users SET `email` = 'john.doe@gmail.com', `first_name` = 'john', `date_updated` = '2016-09-27 11:30:00.000' WHERE (id = 1)");
         })
 
     });
