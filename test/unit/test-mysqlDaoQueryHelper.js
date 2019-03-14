@@ -83,7 +83,7 @@ describe('MysqlDaoQueryHelper', function() {
             }, {ignoreOnDuplicateKey: true});
 
             Should.exist(sql);
-            sql.should.eql(`INSERT INTO users (\`first_name\`, \`last_name\`, \`password\`, \`date_added\`) VALUES ('firstName', 'lastName', TRIM("   mybadpasswordinput    "), '1990-01-05 13:30:00.000') ON DUPLICATE KEY UPDATE first_name = first_name`);
+            sql.should.eql(`INSERT INTO users (\`first_name\`, \`last_name\`, \`password\`, \`date_added\`) VALUES ('firstName', 'lastName', TRIM("   mybadpasswordinput    "), '1990-01-05 13:30:00.000') ON DUPLICATE KEY UPDATE \`first_name\` = \`first_name\``);
         });
 
     });
@@ -110,7 +110,7 @@ describe('MysqlDaoQueryHelper', function() {
             ], {ignoreOnDuplicateKey: true});
             Should.exist(sql);
 
-            sql.should.eql("INSERT INTO users (`first_name`, `last_name`, `password`) VALUES ('firstName', 'lastName', 'boom!'), ('John', 'Doe', 'badpassword'), ('Jane', 'Doe', 'foundrydc') ON DUPLICATE KEY UPDATE first_name = first_name");
+            sql.should.eql("INSERT INTO users (`first_name`, `last_name`, `password`) VALUES ('firstName', 'lastName', 'boom!'), ('John', 'Doe', 'badpassword'), ('Jane', 'Doe', 'foundrydc') ON DUPLICATE KEY UPDATE `first_name` = `first_name`");
         });
 
     });
@@ -120,14 +120,14 @@ describe('MysqlDaoQueryHelper', function() {
             const sql = mysqlDaoQueryHelper.upsert({firstName: 'firstName', lastName: 'lastName', password: 'boom!'}, {password: 'ka-boom!'});
             Should.exist(sql);
 
-            sql.should.eql("INSERT INTO users (`first_name`, `last_name`, `password`) VALUES ('firstName', 'lastName', 'boom!') ON DUPLICATE KEY UPDATE password = 'ka-boom!'");
+            sql.should.eql("INSERT INTO users (`first_name`, `last_name`, `password`) VALUES ('firstName', 'lastName', 'boom!') ON DUPLICATE KEY UPDATE \`password\` = 'ka-boom!'");
         });
 
         it('Should generate an INSERT ... ON DUPLICATE KEY UPDATE statement for raw update args', function() {
             const sql = mysqlDaoQueryHelper.upsert({firstName: 'firstName', lastName: 'lastName', password: 'boom!'}, {password: { raw: 'TRIM("   mybadpasswordinput    ")' } });
             Should.exist(sql);
 
-            sql.should.eql(`INSERT INTO users (\`first_name\`, \`last_name\`, \`password\`) VALUES ('firstName', 'lastName', 'boom!') ON DUPLICATE KEY UPDATE password = TRIM("   mybadpasswordinput    ")`);
+            sql.should.eql(`INSERT INTO users (\`first_name\`, \`last_name\`, \`password\`) VALUES ('firstName', 'lastName', 'boom!') ON DUPLICATE KEY UPDATE \`password\` = TRIM("   mybadpasswordinput    ")`);
         });
 
         it('Should generate an INSERT ... ON DUPLICATE KEY UPDATE statement for multiple rows with insert values', function() {
@@ -144,7 +144,7 @@ describe('MysqlDaoQueryHelper', function() {
             const sql = mysqlDaoQueryHelper.upsertBulk(insertArgs, updateArgs);
             Should.exist(sql);
 
-            sql.should.eql("INSERT INTO users (`first_name`, `last_name`, `password`) VALUES ('f1', 'l1', 'p1'), ('f2', 'l2', 'p2'), ('f3', 'l3', 'p3') ON DUPLICATE KEY UPDATE first_name = VALUES(first_name), last_name = VALUES(last_name), password = VALUES(password)");
+            sql.should.eql("INSERT INTO users (`first_name`, `last_name`, `password`) VALUES ('f1', 'l1', 'p1'), ('f2', 'l2', 'p2'), ('f3', 'l3', 'p3') ON DUPLICATE KEY UPDATE `first_name` = VALUES(`first_name`), `last_name` = VALUES(`last_name`), `password` = VALUES(`password`)");
         });
 
         it('Should generate an INSERT ... ON DUPLICATE KEY UPDATE statement for multiple rows with specific values', function() {
@@ -161,7 +161,7 @@ describe('MysqlDaoQueryHelper', function() {
             const sql = mysqlDaoQueryHelper.upsertBulk(insertArgs, updateArgs);
             Should.exist(sql);
 
-            sql.should.eql("INSERT INTO users (`first_name`, `last_name`, `password`) VALUES ('f1', 'l1', 'p1'), ('f2', 'l2', 'p2'), ('f3', 'l3', 'p3') ON DUPLICATE KEY UPDATE password = 'newpassword1234'");
+            sql.should.eql("INSERT INTO users (`first_name`, `last_name`, `password`) VALUES ('f1', 'l1', 'p1'), ('f2', 'l2', 'p2'), ('f3', 'l3', 'p3') ON DUPLICATE KEY UPDATE `password` = 'newpassword1234'");
         });
     });
 
