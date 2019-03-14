@@ -714,7 +714,17 @@ describe('MysqlDaoQueryHelper', function() {
 
             const sqlString = sqlObj.toString();
 
-            sqlString.should.eql("SELECT * FROM users WHERE (meta->'$.is_active' = true)");
+            sqlString.should.eql("SELECT * FROM users WHERE (`meta`->'$.is_active' = true)");
+        });
+
+        it('Should generate good WHERE clause when input contains JSON path query with already quoted column name', function() {
+            const sqlObj = Squel.select().from('users');
+
+            mysqlDaoQueryHelper._appendWhereClause(sqlObj, {"`meta`->'$.is_active'": true});
+
+            const sqlString = sqlObj.toString();
+
+            sqlString.should.eql("SELECT * FROM users WHERE (`meta`->'$.is_active' = true)");
         });
 
     });
